@@ -11,7 +11,9 @@
 - [ChatGPT / Codex 플러그인 패키지](https://github.com/dudrnjs8300/kdca-press/raw/refs/heads/main/downloads/kdca-press-plugin.zip)
 - [체크섬](downloads/SHA256SUMS.txt) · [설치 안내](docs/DEPLOYMENT.md)
 
-안내 사이트 파일은 `gh-pages` 브랜치에 게시합니다. 최초 공개에는 저장소 Settings → Pages → Deploy from a branch → gh-pages / (root) → Save 설정이 필요합니다.
+[KDCA 보도자료 안내 사이트 열기](https://dudrnjs8300.github.io/kdca-press/) · [GitHub 자동 검사 결과](https://github.com/dudrnjs8300/kdca-press/actions)
+
+안내 사이트는 `gh-pages` 브랜치에서 공개됩니다. 사이트에서 플랫폼별 설치 파일과 사용 방법을 확인할 수 있습니다.
 
 ## 사용 방식
 

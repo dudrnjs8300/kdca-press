@@ -16,14 +16,16 @@ Google 공식 안내(2026-10-08 확인)는 사용자 정의 MCP 앱을 미국·�
 
 저장소: [dudrnjs8300/kdca-press](https://github.com/dudrnjs8300/kdca-press). `main`에는 소스와 `downloads/`의 설치 ZIP이 있고, `gh-pages`에는 안내 사이트와 다운로드 파일이 있습니다.
 
-최초 안내 사이트 공개:
+현재 안내 사이트: **https://dudrnjs8300.github.io/kdca-press/**. 이 저장소에서는 Pages 활성화와 첫 배포가 완료되었습니다.
+
+다른 저장소로 복제할 때의 최초 안내 사이트 공개:
 
 1. 저장소 Settings → Pages로 이동합니다.
 2. Build and deployment의 Source를 **Deploy from a branch**로 선택합니다.
 3. Branch를 **gh-pages**, 폴더를 **/(root)**로 지정하고 Save를 누릅니다.
 4. GitHub가 보여주는 사이트 주소로 접속합니다. 첫 게시에는 수 분이 걸릴 수 있습니다.
 
-이 설정은 현재 연결 도구에 노출되어 있지 않아 저장소 소유자가 한 번 지정해야 합니다. 사이트 파일 자체는 미리 게시되어 있습니다. 설정 전에도 main의 downloads에서 Skill ZIP을 받을 수 있습니다.
+Pages 설정이 없는 새 복제본에서는 저장소 소유자가 이 항목을 지정합니다. 현재 저장소는 활성화되어 있으므로 추가 설정 없이 사이트와 main의 downloads에서 Skill ZIP을 받을 수 있습니다.
 
 향후 GitHub Actions로 자동 배포하려면 Source를 GitHub Actions로 바꾸고 `public connection guide` 워크플로를 실행합니다. API 호스팅 주소가 생기면 repository variable `PUBLIC_BASE_URL`에 HTTPS origin을 넣고 재실행합니다.
 

@@ -16,10 +16,11 @@
 | HWPX 참고 미리보기 | 세 유형 모두 2쪽, Kordoc 경고 없음; 눈으로 본문·표 확인 |
 | 배포 설정 | Render Blueprint와 플러그인 manifest 공식 JSON Schema 검증 통과 |
 | GitHub 공개 저장소 | main에 소스·설치 파일 게시 |
-| 안내 사이트 | gh-pages 브랜치에 정적 사이트 게시; Pages 최초 활성화 필요 |
+| 안내 사이트 | https://dudrnjs8300.github.io/kdca-press/ 공개 및 HTTP 200 확인 |
+| GitHub 원격 자동 검사 | checks 성공: 설치·구문·전체 시험·배포물 빌드 통과 |
 | GitHub Releases | 태그 기반 자동화 준비; 별도 release 게시 전 |
 | 외부 원격 MCP 호스트 | 미배포 |
 | ChatGPT·Claude·Gemini 각 실제 계정 연결 | 미검증; 현재 실행 환경의 Skill 시험과 구분 |
 | 한컴오피스 열기·저장·재열기 | 미검증 |
 
-자동 시험 통과는 모든 AI 플랫폼에서 설치가 끝났다는 뜻이 아닙니다. 플랫폼별 계정 기능·인증 호환성과 실제 한글 조판 검증이 남아 있습니다. 저장소는 dudrnjs8300/kdca-press입니다. 원격 MCP 호스팅과 Pages 활성화는 코드 게시와 별개입니다.
+자동 시험 통과는 모든 AI 플랫폼에서 설치가 끝났다는 뜻이 아닙니다. 플랫폼별 계정 기능·인증 호환성과 실제 한글 조판 검증이 남아 있습니다. 저장소는 dudrnjs8300/kdca-press입니다. 안내 사이트와 Skill 다운로드는 공개되었으며, 원격 MCP 호스팅은 별도로 남아 있습니다.
