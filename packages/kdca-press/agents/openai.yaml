@@ -1,4 +1,0 @@
-interface:
-  display_name: "KDCA 보도자료 작성"
-  short_description: "공개 원문을 질병관리청 보도자료로 퇴고하고 한글 파일로 생성"
-  default_prompt: "$kdca-press를 사용해 아래 공개 원문을 KDCA 보도자료로 다듬고 HWPX 파일로 만들어 줘."
