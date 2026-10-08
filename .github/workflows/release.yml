@@ -1,0 +1,27 @@
+name: release packages
+on:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci --omit=optional --ignore-scripts
+      - run: npm run check
+      - run: npm test
+      - run: npm run build:packages
+      - name: Publish versioned packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: gh release create "$RELEASE_TAG" dist/* --verify-tag --title "KDCA 보도자료 $RELEASE_TAG" --notes-file docs/RELEASE.md

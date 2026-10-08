@@ -1,0 +1,3 @@
+f984605aad6eddf560f9303cb19abb4b1f305f1be8ac8225255aa3348e181d6f  kdca-press-gemini.zip
+a2a57ee9210a2499d3426a8c6d1b9c0e730b067fde418da999ad3ea97f0ab83c  kdca-press-plugin.zip
+d0a35957ba0629bf8e2f9aaeca061c0eafd65d66fcbd96fc1a241e586512a82c  kdca-press-skill.zip
