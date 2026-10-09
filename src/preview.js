@@ -1,7 +1,7 @@
 import { Worker } from 'node:worker_threads';
 let active=0;
 export async function preview(hwpx) {
-  if(active>=2) return {unavailable:'미리보기 생성 요청이 많습니다. HWPX는 생성됐습니다.'};
+  if(active>=1) return {unavailable:'미리보기 생성 요청이 많습니다. HWPX는 생성됐습니다.'};
   active++;
   try {
     return await new Promise(resolve=>{

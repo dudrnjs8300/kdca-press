@@ -2,7 +2,7 @@
 
 공개 원문을 질병관리청 보도자료 문체로 작성·퇴고하고 **편집 가능한 HWPX**로 만드는 Skill + MCP입니다. 심포지엄·통계발표·사업발표를 우선 지원합니다. 기관 공식 서비스가 아닌 개인 개발 도구입니다.
 
-**v0.2.0: 소스·설치 파일을 공개합니다. 실행 코드·표준 MCP 연결 시험은 완료했으며 세 플랫폼 계정별 설치 시험과 원격 MCP 호스팅은 남아 있습니다.** [검증 현황](docs/STATUS.md)을 먼저 확인하세요.
+**v0.3.0: 본인 PC의 WSL에서 MCP를 운영하는 설치기·자동 시작·인증 보존을 제공합니다. 실제 PC·도메인과 세 플랫폼 계정의 연결 시험은 설치 후 완료해야 합니다.** [검증 현황](docs/STATUS.md)을 먼저 확인하세요.
 
 ## 설치 파일 받기
 
@@ -75,6 +75,12 @@ npm run demo
 ```
 
 `http://127.0.0.1:3000`에서 안내 페이지와 데모 로그인을 확인합니다. 로컬 데모 인증은 공개 서버에서 실행되지 않습니다. 원격 운영 설정은 [배포 안내](docs/DEPLOYMENT.md)를 따릅니다.
+
+## 본인 PC에서 운영
+
+[WSL 전체 설치 절차](docs/SELF_HOST_WSL.md) · [PC 서버 안내 페이지](https://dudrnjs8300.github.io/kdca-press/pc.html)
+
+WSL2 + systemd에서 `bash scripts/pc/install-wsl.sh`로 설치하고, 고정 HTTPS 주소·GitHub OAuth App·Cloudflare Tunnel을 준비한 뒤 `bash scripts/pc/activate.sh`로 시작합니다. Windows 자동 시작 파일과 실제 로그인 후 예시 3종을 만드는 검증기도 포함합니다. 인증 정보만 PC에 보존하고 문서는 메모리에 임시 보관합니다.
 
 ## MCP 도구
 

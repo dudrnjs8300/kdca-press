@@ -4,12 +4,12 @@ import cookieParser from 'cookie-parser';
 import { rateLimit } from 'express-rate-limit';
 import { fileURLToPath } from 'node:url';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { Store } from './store.js';
+import { AuthStore } from './auth-store.js';
 import { installAuth } from './auth.js';
 import { Artifacts, formats } from './artifacts.js';
 import { createPortableMcp } from './mcp-v2.js';
 
-export function createRemoteApp(cfg,{store=new Store(':memory:'),artifacts=new Artifacts(),previewer}={}) {
+export function createRemoteApp(cfg,{store=new AuthStore(cfg.authDataDir),artifacts=new Artifacts(),previewer}={}) {
   const app=express(); app.disable('x-powered-by'); app.set('trust proxy',cfg.trustProxy);
   app.use(helmet({contentSecurityPolicy:{directives:{defaultSrc:["'self'"],scriptSrc:["'self'"],styleSrc:["'self'"],imgSrc:["'self'",'data:'],objectSrc:["'none'"],frameAncestors:["'none'"],upgradeInsecureRequests:cfg.local?null:[]}}}));
   app.use((req,res,next)=>{
@@ -26,7 +26,7 @@ export function createRemoteApp(cfg,{store=new Store(':memory:'),artifacts=new A
   app.use(express.json({limit:'256kb'}),express.urlencoded({extended:false,limit:'16kb'}),cookieParser());
   const auth=installAuth(app,store,{...cfg,temporaryArtifacts:true});
   app.use(['/mcp','/artifacts'],rateLimit({windowMs:60000,limit:60,standardHeaders:'draft-7',legacyHeaders:false}));
-  app.get('/healthz',(req,res)=>res.json({status:'ok',service:'kdca-press',version:'0.2.0',storage:'temporary-memory'}));
+  app.get('/healthz',(req,res)=>res.json({status:'ok',service:'kdca-press',version:'0.3.0',storage:'temporary-memory',authentication:store.persistent?'persistent':'memory'}));
   app.get('/api/session',(req,res)=>res.json({user:req.user||null,csrf:req.session?.csrf||null,demo:cfg.demo,mcpUrl:cfg.resource,artifactTtlMinutes:artifacts.ttl/60000}));
   app.get('/artifacts/:id/:format',(req,res)=>{
     const item=artifacts.download(req.params.id,req.query.token),format=req.params.format;

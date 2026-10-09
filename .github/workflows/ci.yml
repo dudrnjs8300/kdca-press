@@ -20,6 +20,14 @@ jobs:
       - run: npm ci --omit=optional --ignore-scripts
       - run: npm run check
       - run: npm test
+      - run: python3 test/pc_setup_test.py
+      - name: Check Windows startup script syntax
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'scripts/pc/enable-autostart.ps1'), [ref]$tokens, [ref]$parseErrors) | Out-Null
+          if ($parseErrors.Count -gt 0) { $parseErrors | Write-Error; exit 1 }
       - run: npm run build:packages
       - uses: actions/upload-artifact@v4
         with:

@@ -26,13 +26,18 @@ export function loadConfig(env = process.env) {
       throw new Error(`Invalid ${key}`);
     return n;
   };
+  const host = env.HOST || (demo ? '127.0.0.1' : '0.0.0.0');
+  if (!['127.0.0.1', '0.0.0.0', '::1'].includes(host) || (demo && host !== '127.0.0.1'))
+    throw new Error('HOST must be an allowed bind address; demo requires 127.0.0.1.');
+  const authDataDir = env.AUTH_DATA_DIR ? path.resolve(env.AUTH_DATA_DIR) : ':memory:';
   return {
     baseUrl: base.origin,
     resource: `${base.origin}/mcp`,
     local,
     demo,
     port: number("PORT", base.port || 3000, 1, 65535),
-    host: demo ? "127.0.0.1" : "0.0.0.0",
+    host,
+    authDataDir,
     dataDir: path.resolve(env.DATA_DIR || "data"),
     githubClientId: env.GITHUB_CLIENT_ID,
     githubClientSecret: env.GITHUB_CLIENT_SECRET,
@@ -40,7 +45,7 @@ export function loadConfig(env = process.env) {
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean),
-    trustProxy: number("TRUST_PROXY", 0, 0, 3),
+    trustProxy: env.TRUST_PROXY === 'loopback' ? 'loopback' : number("TRUST_PROXY", 0, 0, 3),
     maxDocuments: number("MAX_DOCUMENTS_PER_USER", 100, 1, 1000),
     maxSourceChars: number("MAX_SOURCE_CHARS", 24000, 500, 50000),
     secureCookie: base.protocol === "https:",

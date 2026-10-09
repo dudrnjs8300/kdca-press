@@ -98,8 +98,7 @@ test('remote MCP OAuth, file delivery and isolation work without a document data
     assert.equal(createHash('sha256').update(Buffer.from(await received.arrayBuffer())).digest('hex'),result.sha256);
     const invalid=new URL(file.url);invalid.searchParams.set('token','x'.repeat(43));assert.equal((await fetch(invalid)).status,404);
     assert.equal((await other.callTool({name:'kdca_get_artifact',arguments:{artifact_id:result.artifact_id,format:'hwpx'}})).isError,true);
-    assert.equal(instance.store.db.prepare('SELECT count(*) n FROM documents').get().n,0);
-    assert.equal(instance.store.db.prepare('SELECT count(*) n FROM briefs').get().n,0);
+    assert.deepEqual(instance.store.db.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all().map(r=>r.name),['kv','users']);
     instance.artifacts.items.get(result.artifact_id).expires=0;assert.equal((await fetch(file.url)).status,404);
   } finally {await client.close();await other.close();await new Promise(r=>server.close(r));instance.close();}
 });

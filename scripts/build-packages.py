@@ -46,7 +46,8 @@ for p in ROOT.rglob("*"):
     if p.name.startswith(".env") and p.name != ".env.example": continue
     source.append((f"kdca-press-{VERSION}/" + rel.as_posix(), p.read_bytes()))
 package(f"kdca-press-{VERSION}-source.zip", source)
-checksums = "\n".join(hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name for p in sorted(DEST.glob("*.zip"))) + "\n"
+current_packages = [DEST/name for name in ("kdca-press-skill.zip", "kdca-press-gemini.zip", "kdca-press-plugin.zip", f"kdca-press-{VERSION}-source.zip")]
+checksums = "\n".join(hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name for p in sorted(current_packages)) + "\n"
 (DEST / "SHA256SUMS.txt").write_text(checksums)
 downloads = ROOT / "web/downloads"
 downloads.mkdir(exist_ok=True)

@@ -9,3 +9,14 @@ for (const dir of ["src", "public", "web", "scripts", "test"])
     if (result.status) process.exit(result.status);
   }
 console.log("JavaScript syntax checked.");
+
+for (const file of await readdir('scripts/pc')) {
+  if (file.endsWith('.py')) {
+    const py = spawnSync(process.env.PYTHON_BIN || 'python3', ['-c', 'import ast,sys; ast.parse(open(sys.argv[1], encoding="utf-8").read())', `scripts/pc/${file}`], {stdio:'inherit'});
+    if (py.status) process.exit(py.status);
+  }
+  if (!file.endsWith('.sh')) continue;
+  const result = spawnSync('bash', ['-n', `scripts/pc/${file}`], {stdio:'inherit'});
+  if (result.status) process.exit(result.status);
+}
+console.log('WSL shell syntax checked.');
