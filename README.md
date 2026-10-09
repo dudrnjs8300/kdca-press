@@ -2,7 +2,7 @@
 
 공개 원문을 질병관리청 보도자료 문체로 작성·퇴고하고 **편집 가능한 HWPX**로 만드는 Skill + MCP입니다. 심포지엄·통계발표·사업발표를 우선 지원합니다. 기관 공식 서비스가 아닌 개인 개발 도구입니다.
 
-**v0.4.0: Cloudflare 무료 Durable Objects에서 공통 Python 생성기를 실행하는 MCP 어댑터를 추가했습니다.** 도메인 구매나 상시 PC가 필요 없는 구성입니다. 로컬 런타임 시험과 실제 Cloudflare CPU 실측은 구분하며, 계정 배포·실측은 아직 남아 있습니다. [Cloudflare 배포 안내](docs/CLOUDFLARE.md) · [검증 현황](docs/STATUS.md)
+**v0.4.1: Cloudflare 배포와 공개 접속 검사를 완료했습니다.** MCP 주소는 `https://kdca-press.on0740.workers.dev/mcp`입니다. 도메인 구매나 상시 PC가 필요 없습니다. 로그인 후 실제 AI의 문서 생성과 Cloudflare CPU 실측은 아직 확인해야 합니다. 배포 직후 주소 반영 지연을 기다리는 검사도 추가했습니다. [Cloudflare 배포 안내](docs/CLOUDFLARE.md) · [검증 현황](docs/STATUS.md)
 
 ## 설치 파일 받기
 

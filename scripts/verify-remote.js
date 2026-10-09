@@ -1,8 +1,10 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { waitForRemoteReady } from './remote-ready.js';
 const base = new URL(process.env.PUBLIC_BASE_URL);
 if (base.protocol !== "https:")
   throw new Error("Remote verification requires HTTPS");
+await waitForRemoteReady(base);
 for (const route of [
   "/healthz",
   "/.well-known/oauth-authorization-server",

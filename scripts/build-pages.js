@@ -14,7 +14,7 @@ if(raw){
   if(base.protocol!=='https:'||base.pathname!=='/'||base.search||base.hash||base.username||base.password)throw new Error('PUBLIC_BASE_URL must be an HTTPS origin.');
   const safe=base.origin.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const html=await readFile('site-dist/index.html','utf8');
-  await writeFile('site-dist/index.html',html.replace('원격 MCP 운영 주소는 배포 후 제공됩니다.',safe+'/mcp'));
+  await writeFile('site-dist/index.html',html.replace(/(<code id="mcp-url">)[^<]*(<\/code>)/,`$1${safe}/mcp$2`));
 }
 // Static Pages must not attempt authenticated dynamic endpoints.
 await writeFile('site-dist/connect.js','// Static download and installation guide.\n');

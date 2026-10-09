@@ -1,4 +1,4 @@
-# v0.4.0 검증 현황
+# v0.4.1 검증 현황
 
 기록일: 2026-10-10 한국.
 
@@ -11,7 +11,7 @@
 | 원격 HTTP MCP | 로컬 실제 HTTP 서버에서 OAuth/PKCE·파일 전달 시험 |
 | 임시 파일 격리·만료 | 다른 사용자 접근 차단, 잘못된 토큰, 만료 시험 |
 | Claude용·Gemini용 Skill ZIP, 플러그인 ZIP | 각각 압축 해제 후 격리된 Python 실행 시험 통과 |
-| 전체 자동 시험 | 15개 Node 시험 + Python 설치 설정 시험 2개 통과; Workers 실제 런타임 통합 시험 별도 통과 |
+| 전체 자동 시험 | 18개 Node 시험 + Python 설치 설정 시험 2개 통과; Workers 실제 런타임 통합 시험 별도 통과 |
 | 화면 확인 | 데스크톱·모바일 오류/가로 넘침 없음, 다운로드·데모 로그인 확인 |
 | HWPX 참고 미리보기 | 세 유형 모두 2쪽, Kordoc 경고 없음; 눈으로 본문·표 확인 |
 | 배포 설정 | Render Blueprint와 플러그인 manifest 공식 JSON Schema 검증 통과 |
@@ -22,11 +22,11 @@
 | PC 서비스 설정 검사 | systemd unit 문법·비밀값 분리·파일 권한 검사 통과 |
 | PC 설치·자동 시작 파일 | WSL 설치기·systemd 2개 서비스·Windows 로그인 작업 제공; 실제 Windows 실행 미검증 |
 | 재시작 인증 유지 | OAuth 등록·세션·액세스/갱신·폐기 상태 유지와 생성 파일 소멸 자동 시험 통과 |
-| 외부 원격 MCP 호스트 | Cloudflare 무료 Durable Objects 어댑터 추가; 사용자 계정 배포·CPU 실측 전 |
+| 외부 원격 MCP 호스트 | Cloudflare 두 Worker 배포·OAuth 비밀값 설정 완료; `/healthz`·OAuth discovery·미인증 401 확인. 로그인 후 생성·CPU 실측은 미검증 |
 | ChatGPT·Claude·Gemini 각 실제 계정 연결 | 미검증; 현재 실행 환경의 Skill 시험과 구분 |
 | 한컴오피스 열기·저장·재열기 | 미검증 |
 
-자동 시험 통과는 모든 AI 플랫폼에서 설치가 끝났다는 뜻이 아닙니다. 플랫폼별 계정 기능·인증 호환성과 실제 한글 조판 검증이 남아 있습니다. 저장소는 dudrnjs8300/kdca-press입니다. 안내 사이트와 Skill 다운로드는 공개되었으며, 원격 MCP 호스팅은 별도로 남아 있습니다.
+자동 시험 통과는 모든 AI 플랫폼에서 설치가 끝났다는 뜻이 아닙니다. 플랫폼별 계정 기능·인증 호환성과 실제 한글 조판 검증이 남아 있습니다. 저장소는 dudrnjs8300/kdca-press입니다. 안내 사이트와 Skill 다운로드는 공개되었으며, 원격 MCP 주소는 `https://kdca-press.on0740.workers.dev/mcp`입니다. 현재 허용 계정은 `dudrnjs8300`입니다.
 
 ## Cloudflare Workers 추가 검증
 
@@ -38,3 +38,11 @@
 - [기록된 결과](../evals/workers/local-runtime.json)는 로컬 전체 경과 시간이며 실제 Cloudflare CPU 측정값이 아닙니다.
 - Workers 경로에서는 SVG 쪽 미리보기를 제공하지 않습니다. HWPX 본문·표·서식은 동일합니다.
 - 새 버전의 GitHub CI 결과는 해당 커밋의 Actions를 확인하세요. Cloudflare 배포 워크플로 실행에는 운영자의 계정 설정이 필요합니다.
+
+## 실제 배포 확인 — 2026-10-10 한국
+
+- 배포 실행: [GitHub Actions #2](https://github.com/dudrnjs8300/kdca-press/actions/runs/37988067631), 서버 코드 `ffbc2c41ccf0ad5f420afae16b5d0c2c12aae4ac`.
+- 비공개 Python 엔진과 공개 MCP 어댑터 업로드, GitHub OAuth 설정 저장 완료.
+- 배포 직후 `/healthz`가 일시적으로 404를 반환했으나 후속 실접속 검사에서 상태·OAuth 메타데이터·미인증 401이 모두 통과했습니다. v0.4.1은 공개 상태 검사에 한정한 횟수 제한 재시도를 추가합니다.
+- 배포 로그의 Worker Startup Time은 요청당 CPU나 문서 생성 시간으로 해석하지 않습니다.
+- 인증된 실제 서비스의 문서 생성, CPU 사용량 및 각 AI 계정 설치 검증은 아직 완료하지 않았습니다.

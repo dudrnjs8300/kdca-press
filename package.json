@@ -1,6 +1,6 @@
 {
   "name": "kdca-press",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "description": "KDCA press-release editorial Skill, offline HWPX engine and MCP adapters",
   "type": "module",

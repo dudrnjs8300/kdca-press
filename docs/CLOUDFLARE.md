@@ -1,6 +1,6 @@
 # Cloudflare 무료 구성으로 KDCA MCP 운영
 
-독립 도메인이나 Render 없이 `https://kdca-press.<계정하위도메인>.workers.dev/mcp`를 사용합니다. 운영자 PC를 계속 켜 둘 필요가 없고, 이용자는 별도 프로그램이나 AI API 키를 설치·입력하지 않습니다. **현재 공개 MCP 주소는 아직 발급·검증되지 않았습니다. 아래 배포를 완료해야 사용할 수 있습니다.**
+독립 도메인이나 Render 없이 `https://kdca-press.<계정하위도메인>.workers.dev/mcp`를 사용합니다. 운영자 PC를 계속 켜 둘 필요가 없고, 이용자는 별도 프로그램이나 AI API 키를 설치·입력하지 않습니다. **현재 MCP 주소: `https://kdca-press.on0740.workers.dev/mcp`.** 2026-10-10 한국 시각 기준, 두 Worker 배포와 공개 상태·OAuth 안내·미인증 요청 거부를 확인했습니다. 기본 허용 사용자는 운영자 `dudrnjs8300`이며, 로그인 후 문서 생성·실제 CPU 측정은 아직 남아 있습니다.
 
 ## 처리 시간에 대한 결론
 
@@ -31,7 +31,7 @@ Python 엔진에는 공개 `workers.dev` 주소가 없습니다. 인증된 MCP �
 ## GitHub에서 배포하기 — 운영자만 1회 설정
 
 1. Cloudflare의 **Workers 및 Pages** 화면에서 자신의 `workers.dev` 하위 도메인과 Account ID를 확인합니다. **도메인 등록/구매 화면은 사용하지 않습니다.** Workers Free 계정에 배포합니다.
-2. Cloudflare API 토큰을 만듭니다. `Edit Cloudflare Workers` 템플릿을 참고하여 해당 계정의 Workers Scripts 및 필요한 Workers 계정 설정을 관리할 수 있도록 제한합니다. 이 앱은 Zone/DNS 변경, R2, 유료 컨테이너가 필요하지 않습니다.
+2. Cloudflare API 토큰을 만듭니다. 배포할 계정에 `Workers Scripts Write`와 `Account Settings Read` 권한을 부여합니다. 이 권한으로 실제 배포를 확인했습니다. GitHub 호스팅 실행기의 IP가 달라질 수 있으므로 토큰의 선택 항목인 클라이언트 IP 필터링은 설정하지 않습니다. 이 앱은 Zone/DNS 변경, R2, 유료 컨테이너가 필요하지 않습니다.
 3. GitHub의 [OAuth Apps](https://github.com/settings/developers)에서 개인용 OAuth App을 생성합니다. Homepage URL은 `https://kdca-press.<내하위도메인>.workers.dev`, callback은 같은 주소 뒤에 `/auth/github/callback`을 붙입니다. 기존 앱을 다른 서버에서 계속 쓰는 경우 별도 앱을 만드세요.
 4. [저장소의 Actions secrets](https://github.com/dudrnjs8300/kdca-press/settings/secrets/actions)에 아래 네 값을 등록합니다. **토큰과 client secret을 채팅·코드·일반 repository variables에 넣지 마세요.**
 
