@@ -1,0 +1,53 @@
+name: deploy Cloudflare MCP
+on:
+  workflow_dispatch:
+    inputs:
+      public_base_url:
+        description: 'Cloudflare 기본 주소: https://kdca-press.내하위도메인.workers.dev (끝 / 제외)'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: cloudflare-mcp
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      GITHUB_CLIENT_ID: ${{ secrets.KDCA_GITHUB_CLIENT_ID }}
+      GITHUB_CLIENT_SECRET: ${{ secrets.KDCA_GITHUB_CLIENT_SECRET }}
+      PUBLIC_BASE_URL: ${{ inputs.public_base_url }}
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Validate deployment settings without printing secrets
+        run: python3 scripts/worker-settings.py check
+      - run: npm ci
+      - run: npm test
+      - run: python3 -m pip install uv==0.12.23
+      - run: python3 scripts/build-worker-engine.py
+      - name: Prepare Python runtime
+        working-directory: workers/engine
+        run: uv run --locked pywrangler deploy --dry-run
+      - name: Verify both runtimes before deployment
+        run: node test/workers-runtime.mjs
+      - name: Deploy private Python Durable Object
+        working-directory: workers/engine
+        run: uv run --locked pywrangler deploy
+      - name: Deploy MCP adapter
+        run: npx wrangler deploy --config workers/gateway/wrangler.jsonc
+      - name: Configure private OAuth settings
+        run: python3 scripts/worker-settings.py secrets | npx wrangler secret bulk --config workers/gateway/wrangler.jsonc
+      - name: Check public OAuth discovery and unauthenticated denial
+        run: npm run verify:remote

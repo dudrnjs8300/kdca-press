@@ -1,0 +1,8 @@
+[project]
+name = "kdca-press-worker-engine"
+version = "0.3.0"
+requires-python = ">=3.13"
+dependencies = []
+
+[dependency-groups]
+dev = ["workers-py", "workers-runtime-sdk"]

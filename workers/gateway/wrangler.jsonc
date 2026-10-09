@@ -1,0 +1,16 @@
+{
+  "name": "kdca-press",
+  "main": "entry.js",
+  "compatibility_date": "2026-10-09",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "preview_urls": false,
+  "durable_objects": {"bindings": [
+    {"name": "APP", "class_name": "PressApp"},
+    {"name": "ENGINE", "class_name": "PressEngine", "script_name": "kdca-press-engine"}
+  ]},
+  "migrations": [{"tag": "v1", "new_sqlite_classes": ["PressApp"]}],
+  "vars": {"ALLOWED_GITHUB_IDS": "61446131"},
+  "rules": [{"type":"Text", "globs":["**/*.md"], "fallthrough":true}],
+  "observability": {"enabled": true, "logs": {"invocation_logs": false}}
+}

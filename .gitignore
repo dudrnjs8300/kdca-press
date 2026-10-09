@@ -21,3 +21,11 @@ web/downloads/
 *.sqlite-wal
 *.token
 server.env
+workers/engine/src/kdca_core.py
+workers/engine/src/bundled_assets.py
+workers/engine/.venv/
+workers/engine/.venv-workers/
+workers/engine/python_modules/
+workers/engine/.python-workers/
+.wrangler/
+.dev.vars*

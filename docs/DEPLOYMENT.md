@@ -1,5 +1,7 @@
 # 설치와 배포
 
+Cloudflare 무료 구성을 사용하려면 [Workers + Durable Objects 배포 안내](CLOUDFLARE.md)를 참고하세요. 아래 PC·Render 방식은 선택 가능한 대안입니다.
+
 ## 1. 서버 없이 Skill 사용
 
 배포 패키지는 `npm run build:packages`로 만듭니다. Python 3.10+가 빌드 호스트에 있으면 추가 Python 패키지는 필요 없습니다.

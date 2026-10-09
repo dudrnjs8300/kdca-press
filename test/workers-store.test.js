@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {WorkerArtifacts,WorkerAuthStore,WorkerRateStore} from '../workers/gateway/store.js';
+import {digest} from '../src/security.js';
+
+test('Workers SQL adapter preserves auth and temporary files across eviction and deletes expired documents',async()=>{
+  const db=new DatabaseSync(':memory:');
+  const sql={exec(query,...args){const rows=db.prepare(query).all(...args);return {toArray:()=>rows,one:()=>{assert.equal(rows.length,1);return rows[0];}};}};
+  const auth=new WorkerAuthStore(sql),files=new WorkerArtifacts(sql);
+  const user=auth.user('alice','Alice'),session=auth.session(user);
+  auth.put('access',digest('test-access'),{userId:'alice'},3600);
+  const {item,token}=files.put('alice',{title:'시험',hwpxBase64:'YWJj',markdown:'text',review:{passed:true},validation:{ok:true},sha256:'test'},null);
+  const nextAuth=new WorkerAuthStore(sql),nextFiles=new WorkerArtifacts(sql);
+  assert.equal(nextAuth.get('session',digest(session)).user.id,'alice');
+  assert.equal(nextAuth.get('access',digest('test-access')).userId,'alice');
+  assert.equal(nextFiles.get(item.id,'mallory'),undefined);
+  assert.equal(nextFiles.download(item.id,'x'.repeat(43)),undefined);
+  assert.equal(nextFiles.download(item.id,token).files.hwpx.toString(),'abc');
+  nextFiles.clock=()=>item.expires+1;nextFiles.cleanup();
+  assert.equal(nextFiles.get(item.id,'alice'),undefined);
+  assert.equal(sql.exec('SELECT count(*) AS n FROM artifacts').one().n,0);
+  assert.ok(nextAuth.get('session',digest(session)));
+  assert.throws(()=>auth.put('document','source','private text'),/namespace/);
+  const rate=new WorkerRateStore(sql,'test');rate.init({windowMs:60000});
+  assert.equal((await rate.increment('client')).totalHits,1);
+  const nextRate=new WorkerRateStore(sql,'test');nextRate.init({windowMs:60000});
+  assert.equal((await nextRate.increment('client')).totalHits,2);
+  sql.exec('UPDATE rate_limits SET expires=0');
+  assert.equal((await nextRate.increment('client')).totalHits,1);
+  assert.equal((await nextRate.increment(undefined)).totalHits,1);
+  db.close();
+});

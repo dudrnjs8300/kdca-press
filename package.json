@@ -1,6 +1,6 @@
 {
   "name": "kdca-press",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "description": "KDCA press-release editorial Skill, offline HWPX engine and MCP adapters",
   "type": "module",
@@ -20,7 +20,9 @@
     "test:portable": "node --test test/portable.test.js",
     "build:packages": "python3 scripts/build-packages.py",
     "demo:legacy": "DEMO_MODE=true PUBLIC_BASE_URL=http://127.0.0.1:3000 node src/index.js",
-    "verify:pc": "node scripts/verify-pc.js"
+    "verify:pc": "node scripts/verify-pc.js",
+    "build:workers": "python3 scripts/build-worker-engine.py",
+    "test:workers": "node test/workers-runtime.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.1",
@@ -34,7 +36,8 @@
     "zod": "3.25.76"
   },
   "devDependencies": {
-    "supertest": "7.1.4"
+    "supertest": "7.1.4",
+    "wrangler": "4.149.0"
   },
   "license": "MIT",
   "overrides": {

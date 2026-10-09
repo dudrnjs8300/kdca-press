@@ -6,6 +6,32 @@ on:
 permissions:
   contents: read
 jobs:
+  workers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: npm ci
+      - run: python3 -m pip install uv==0.12.23
+      - run: python3 scripts/build-worker-engine.py
+      - name: Prepare Python worker
+        working-directory: workers/engine
+        run: uv run --locked pywrangler deploy --dry-run
+      - run: node test/workers-runtime.mjs
+      - name: Save timings and generated examples
+        uses: actions/upload-artifact@v4
+        with:
+          name: workers-runtime-results
+          path: |
+            test-output/workers/benchmark.json
+            test-output/workers/*.hwpx
   verify:
     runs-on: ubuntu-latest
     steps:

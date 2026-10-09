@@ -1,7 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, chmodSync } from 'node:fs';
 import path from 'node:path';
-import { secret, digest, now } from './store.js';
+import { secret, digest, now } from './security.js';
 
 // Only authentication state belongs on disk. Documents have no storage API here.
 const namespaces = new Set(['session', 'github', 'client', 'authorization', 'code',

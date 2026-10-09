@@ -1,0 +1,49 @@
+{
+  "measured_at": "2026-10-09T19:54:48.161Z",
+  "runtime": "local workerd + Python/WASM Durable Objects",
+  "metric": "MCP call end-to-end wall time, NOT production CPU time",
+  "production_cpu_verified": false,
+  "fixtures": "three fictional pre-authored drafts; not an AI writing evaluation",
+  "stress": {
+    "paragraphs": 24,
+    "evidence_entries": 60,
+    "wall_ms": 778.36
+  },
+  "checks": [
+    "OAuth PKCE/code replay/revocation",
+    "MCP SDK discovery",
+    "15 fixture HWPX generations + 1 expanded-input generation",
+    "ZIP/XML and native-core equivalence",
+    "download SHA256",
+    "invalid capability token",
+    "fabricated number rejected"
+  ],
+  "results": [
+    {
+      "kind": "symposium",
+      "runs": 5,
+      "first_ms": 732.89,
+      "median_ms": 872.85,
+      "max_ms": 947.1,
+      "sha256": "56f8830b2cc83c1697d697c52933f2cc333dd6386522a11d422ff8834fc3aa49"
+    },
+    {
+      "kind": "statistics",
+      "runs": 5,
+      "first_ms": 810.4,
+      "median_ms": 799.67,
+      "max_ms": 929.49,
+      "sha256": "ecb770181d80b6561c2ead2c0a236c69acea2320bb82161659d495478f59f981"
+    },
+    {
+      "kind": "program",
+      "runs": 5,
+      "first_ms": 775.88,
+      "median_ms": 774.78,
+      "max_ms": 883.11,
+      "sha256": "597b25d471b1518e04821e35a9b69b24e116bcc1246f9ce1151eba6d017a301e"
+    }
+  ],
+  "core_sha256": "06ce56cf4599f895d720f938ddd906526be0fc1a5aedee86bfd0238a9083a110",
+  "workerd_version": "1.20261006.1"
+}

@@ -1,11 +1,9 @@
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
-import { randomBytes, randomUUID, createHash } from "node:crypto";
-
-export const secret = () => randomBytes(32).toString("base64url");
-export const digest = (s) => createHash("sha256").update(s).digest("hex");
-export const now = () => Math.floor(Date.now() / 1000);
+import { randomUUID } from "node:crypto";
+import { secret, digest, now } from './security.js';
+export { secret, digest, now } from './security.js';
 export class Store {
   constructor(dir) {
     if (dir !== ":memory:") mkdirSync(dir, { recursive: true, mode: 0o700 });

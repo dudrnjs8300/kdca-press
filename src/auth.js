@@ -1,7 +1,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import { rateLimit } from "express-rate-limit";
-import { secret, digest, now } from "./store.js";
+import { secret, digest, now } from "./security.js";
 
 const scope = "pressroom";
 const same = (a, b) =>
@@ -35,6 +35,8 @@ export function validRedirect(value) {
   }
 }
 export function installAuth(app, store, cfg) {
+  const limiter = options => rateLimit({...options,
+    ...(cfg.createRateLimitStore ? {store:cfg.createRateLimitStore()} : {})});
   const cookie = {
     httpOnly: true,
     secure: cfg.secureCookie,
@@ -42,7 +44,7 @@ export function installAuth(app, store, cfg) {
     path: "/",
   };
   const cookieName = cfg.secureCookie ? "__Host-pressroom" : "pressroom";
-  const limit = rateLimit({
+  const limit = limiter({
     windowMs: 15 * 60 * 1000,
     limit: 60,
     standardHeaders: "draft-7",
@@ -246,7 +248,7 @@ export function installAuth(app, store, cfg) {
   );
   app.post(
     "/oauth/register",
-    rateLimit({
+    limiter({
       windowMs: 3600000,
       limit: 15,
       standardHeaders: "draft-7",

@@ -35,7 +35,7 @@ plugin_items = [("kdca-press/plugin.json", json.dumps(manifest, ensure_ascii=Fal
 plugin_items += [("kdca-press/skills/kdca-press/" + p.relative_to(skill).as_posix(), p.read_bytes()) for p in files]
 package("kdca-press-plugin.zip", plugin_items)
 
-allowed_roots = {"src", "packages", "scripts", "test", "examples", "templates", "web", "public", "docs", "evals", ".github"}
+allowed_roots = {"src", "packages", "scripts", "test", "examples", "templates", "web", "public", "docs", "evals", ".github", "workers"}
 allowed_files = {"README.md", "LICENSE", "THIRD_PARTY.md", "package.json", "package-lock.json", "Dockerfile", "render.yaml", ".dockerignore", ".gitignore", ".env.example"}
 source = []
 for p in ROOT.rglob("*"):
@@ -43,6 +43,9 @@ for p in ROOT.rglob("*"):
     if not p.is_file() or not (rel.parts[0] in allowed_roots or rel.as_posix() in allowed_files): continue
     if "__pycache__" in rel.parts or p.suffix in (".pyc", ".log") or "node_modules" in rel.parts: continue
     if rel.parts[:2] == ("web", "downloads"): continue
+    if any(part in (".venv", ".venv-workers", ".python-workers", ".wrangler", "python_modules", "test-output", "dist") for part in rel.parts): continue
+    if p.name.startswith(".dev.vars") or p.suffix in (".sqlite", ".token"): continue
+    if p.name in ("kdca_core.py", "bundled_assets.py"): continue
     if p.name.startswith(".env") and p.name != ".env.example": continue
     source.append((f"kdca-press-{VERSION}/" + rel.as_posix(), p.read_bytes()))
 package(f"kdca-press-{VERSION}-source.zip", source)

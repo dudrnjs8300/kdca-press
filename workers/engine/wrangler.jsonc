@@ -1,0 +1,12 @@
+{
+  "name": "kdca-press-engine",
+  "main": "src/entry.py",
+  "compatibility_date": "2026-10-09",
+  "compatibility_flags": ["python_workers"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "python_modules": {"exclude": ["**/*.pyc", ".venv/**", ".venv-workers/**"]},
+  "durable_objects": {"bindings": [{"name": "ENGINE", "class_name": "PressEngine"}]},
+  "migrations": [{"tag": "v1", "new_sqlite_classes": ["PressEngine"]}],
+  "observability": {"enabled": true, "logs": {"invocation_logs": true}}
+}
