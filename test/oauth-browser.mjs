@@ -70,7 +70,9 @@ try {
     const target = new URL(page.url());
     assert.equal(target.searchParams.get('state'), 'browser-' + decision);
     assert.equal(submittedOrigins.at(-1), origin, 'browser must send the real Origin, not null');
-    assert.equal(callbackRequests.at(-1).referer, origin + '/', 'no consent request ID or query may leak');
+    // The POST redirect's default no-referrer policy may omit Referer entirely.
+    assert.ok([undefined, origin + '/'].includes(callbackRequests.at(-1).referer),
+      'no consent request ID or query may leak');
     if (decision === 'deny') {
       assert.equal(target.searchParams.get('error'), 'access_denied');
       assert.equal(target.searchParams.has('code'), false);
