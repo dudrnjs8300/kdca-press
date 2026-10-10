@@ -1,5 +1,15 @@
 name: deploy Cloudflare MCP
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'workers/**'
+      - 'packages/kdca-press/**'
+      - 'package*.json'
+      - 'scripts/worker-settings.py'
+      - 'scripts/build-worker-engine.py'
+      - '.github/workflows/cloudflare.yml'
   workflow_dispatch:
     inputs:
       public_base_url:
@@ -13,6 +23,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   deploy:
+    if: github.event_name == 'workflow_dispatch' || github.repository == 'dudrnjs8300/kdca-press'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -20,7 +31,7 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       GITHUB_CLIENT_ID: ${{ secrets.KDCA_GITHUB_CLIENT_ID }}
       GITHUB_CLIENT_SECRET: ${{ secrets.KDCA_GITHUB_CLIENT_SECRET }}
-      PUBLIC_BASE_URL: ${{ inputs.public_base_url }}
+      PUBLIC_BASE_URL: ${{ inputs.public_base_url || 'https://kdca-press.on0740.workers.dev' }}
       WRANGLER_SEND_METRICS: 'false'
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +46,10 @@ jobs:
         run: python3 scripts/worker-settings.py check
       - run: npm ci
       - run: npm test
+      - name: Verify native browser consent before deployment
+        env:
+          PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
+        run: node test/oauth-browser.mjs
       - run: python3 -m pip install uv==0.12.23
       - run: python3 scripts/build-worker-engine.py
       - name: Prepare Python runtime

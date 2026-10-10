@@ -383,6 +383,16 @@ export function installAuth(app, store, cfg) {
       return fail(res, "access_denied", "로그인 계정이 달라졌습니다.", 403);
     p.userId = req.user.id;
     store.put("authorization", id, p, 600);
+    // Native form POSTs send Origin:null under Helmet's no-referrer default.
+    // Preserve the real Origin for CSRF checks without leaking the request query.
+    res.set("Referrer-Policy", "strict-origin");
+    // Chromium checks form-action on the redirect back to the registered client.
+    // Keep every other CSP directive and allow only this validated callback origin.
+    const policy = String(res.getHeader("Content-Security-Policy") || "")
+      .split(";")
+      .filter((d) => d.trim() && !/^form-action(?:\s|$)/i.test(d.trim()));
+    policy.push(`form-action 'self' ${new URL(p.redirectUri).origin}`);
+    res.set("Content-Security-Policy", policy.join(";"));
     res
       .type("html")
       .send(

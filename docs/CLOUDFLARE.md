@@ -45,6 +45,8 @@ Python 엔진에는 공개 `workers.dev` 주소가 없습니다. 인증된 MCP �
 5. [deploy Cloudflare MCP](https://github.com/dudrnjs8300/kdca-press/actions/workflows/cloudflare.yml) → **Run workflow**. `public_base_url`에 위 HTTPS 주소를 끝 `/` 없이 입력합니다. 실행은 런타임 검사 → 비공개 Python 엔진 → MCP 어댑터 → OAuth 설정 → 접속 검사를 진행합니다. 검사에 실패하면 이후 배포 단계로 넘어가지 않습니다.
 6. 완료되면 `<주소>/healthz`에서 `status: ok`를 확인하고, AI의 사용자 정의 MCP 연결에 `<주소>/mcp`를 등록하여 GitHub 로그인·승인을 진행합니다. 기본 허용 계정은 `dudrnjs8300`의 숫자 ID `61446131`입니다.
 
+현재 운영 저장소에서는 `main`의 서버·엔진·의존성 변경 시 같은 검사 후 자동 재배포합니다. 기본 대상은 `https://kdca-press.on0740.workers.dev`이며, 다른 저장소로 복제한 경우 자동 배포하지 않습니다. 수동 **Run workflow**도 계속 사용할 수 있습니다. 브라우저 승인 회귀 검사나 Workers 검사에 실패하면 배포하지 않습니다.
+
 `/mcp`는 브라우저로 열어 사용하는 페이지가 아닙니다. 일반 브라우저 GET 또는 승인 없는 호출에서 401이 나오는 것은 정상입니다. 서비스별 원격 MCP 제공 여부와 계정/지역 조건은 [설치 안내](DEPLOYMENT.md)를 따릅니다. 세 플랫폼의 실제 계정에서 연결 완료를 검증한 상태는 아닙니다.
 
 ## 로컬 개발·회귀 검사

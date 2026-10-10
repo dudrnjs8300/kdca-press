@@ -46,6 +46,10 @@ jobs:
       - run: npm ci --omit=optional --ignore-scripts
       - run: npm run check
       - run: npm test
+      - name: Browser OAuth consent regression
+        env:
+          PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
+        run: node test/oauth-browser.mjs
       - run: python3 test/pc_setup_test.py
       - name: Check Windows startup script syntax
         shell: pwsh

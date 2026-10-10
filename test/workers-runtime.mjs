@@ -52,7 +52,11 @@ try {
   const verifier=randomBytes(32).toString('base64url');
   const q=new URLSearchParams({client_id:registration.client_id,redirect_uri:registration.redirect_uris[0],response_type:'code',code_challenge:createHash('sha256').update(verifier).digest('base64url'),code_challenge_method:'S256',scope:'pressroom',resource:base+'/mcp'});
   const pending=(await web('/oauth/authorize?'+q)).headers.get('location');assert.match(pending,/^\/oauth\/consent/);
-  assert.equal((await web(pending)).status,200);
+  const consentPage=await web(pending);assert.equal(consentPage.status,200);
+  assert.equal(consentPage.headers.get('referrer-policy'),'strict-origin');
+  assert.match(consentPage.headers.get('content-security-policy'),/form-action 'self' http:\/\/127\.0\.0\.1:9999(?:;|$)/);
+  const badConsent=form({request:new URL(pending,base).searchParams.get('request'),_csrf:session.csrf,decision:'allow'});
+  badConsent.headers.Origin='null';assert.equal((await web('/oauth/consent',badConsent)).status,403);
   const consent=await web('/oauth/consent',form({request:new URL(pending,base).searchParams.get('request'),_csrf:session.csrf,decision:'allow'}));
   const grant={grant_type:'authorization_code',client_id:registration.client_id,code:new URL(consent.headers.get('location')).searchParams.get('code'),code_verifier:verifier,redirect_uri:registration.redirect_uris[0],resource:base+'/mcp'};
   const tokens=await (await web('/oauth/token',form(grant))).json();token=tokens.access_token;assert.ok(token);

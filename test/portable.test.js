@@ -84,6 +84,16 @@ test('remote MCP OAuth, file delivery and isolation work without a document data
     const redirect=await web.get('/oauth/authorize').query(query).expect(302);
     const pending=new URL(redirect.headers.location,origin).searchParams.get('request');
     const consent=await web.get(redirect.headers.location).expect(200);assert.ok(consent.text.includes('임시 보관'));
+    assert.equal(consent.headers['referrer-policy'],'strict-origin');
+    assert.match(consent.headers['content-security-policy'],/form-action 'self' http:\/\/127\.0\.0\.1:9191(?:;|$)/);
+    assert.match(consent.headers['content-security-policy'],/script-src 'self'(?:;|$)/);
+    assert.match(consent.headers['content-security-policy'],/frame-ancestors 'none'(?:;|$)/);
+    const form={request:pending,_csrf:session.csrf,decision:'allow'};
+    for(const badOrigin of ['null','https://attacker.invalid'])
+      await web.post('/oauth/consent').set('Origin',badOrigin).type('form').send(form).expect(403);
+    await web.post('/oauth/consent').type('form').send(form).expect(403);
+    await web.post('/oauth/consent').set('Origin',origin).type('form').send({...form,_csrf:'wrong'}).expect(403);
+    assert.equal((await web.get('/healthz')).headers['referrer-policy'],'no-referrer');
     const allow=await web.post('/oauth/consent').set('Origin',origin).type('form').send({request:pending,_csrf:session.csrf,decision:'allow'}).expect(302);
     const grant={client_id:meta.client_id,grant_type:'authorization_code',code:new URL(allow.headers.location).searchParams.get('code'),redirect_uri:query.redirect_uri,resource:cfg.resource,code_verifier:verifier};
     const tokens=(await web.post('/oauth/token').type('form').send(grant).expect(200)).body;

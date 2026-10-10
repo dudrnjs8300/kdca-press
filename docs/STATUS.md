@@ -2,6 +2,12 @@
 
 기록일: 2026-10-10 한국.
 
+## OAuth 승인 페이지 수정
+
+- 기존 `no-referrer` 정책은 브라우저의 HTML 승인 폼 POST에서 `Origin: null`을 만들어 정상 요청도 CSRF 검사에서 거부할 수 있었습니다. 승인 페이지만 `strict-origin`으로 바꾸고 Origin·CSRF 토큰 검사는 유지합니다.
+- 승인 후 AI 앱으로 돌아가는 리디렉션을 위해 해당 요청에 등록된 callback origin만 CSP `form-action`에 추가합니다. 다른 CSP 지시문은 그대로 유지합니다.
+- 자동 브라우저 검사는 기존 정책의 동일한 403 오류 재현, 수정된 허용·취소, PKCE 토큰 교환, URL 쿼리의 Referer 유출 방지를 확인합니다. 운영 배포 전 필수 검사로 실행하며, 실제 ChatGPT 계정 연결 완료와는 구분합니다.
+
 | 항목 | 상태 |
 | --- | --- |
 | KDCA Skill 지침·공통 Python 엔진 | 구현, 실제 원문 세 유형 생성 시험 |
