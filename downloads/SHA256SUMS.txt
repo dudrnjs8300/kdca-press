@@ -1,4 +1,4 @@
-974aad4479adf3a5ece2bd05aea3c0e5c3c4e7da48d80a641bb601dfce9bbe89  kdca-press-0.5.0-source.zip
-dc6abfd73e8faaa1ccb1464fe442ad4fe51834979c715bfde5051dd0f960c2c1  kdca-press-gemini.zip
-f35ce49c7966cf01f49b4df25bf10f6cf179c19f72f0d2ecc4b8ac4f05266b9f  kdca-press-plugin.zip
-14de8b30dfa2d9caae0f19b8cc0eefb762792272e0cc62b0fc1d4165b73a0438  kdca-press-skill.zip
+3b79f70a99aa40a92b7fb34a89bbf960d3a3922ad08d5a37b87477ba7c793e11  kdca-press-0.5.1-source.zip
+1bfd123bb33e920dfb189f7e080904c11c8cf2ac7f94e2e7a9dd11dd15b45c01  kdca-press-gemini.zip
+54e06495b8d027d5e213a3e1d0b5539f5e58f68d0cf0ea44e6a4c0dd3fd9a97d  kdca-press-plugin.zip
+01d9748c07b31602fcf0a4f851d35eb9ed0f4fccd32c22e7009ebe4c47e6f4a0  kdca-press-skill.zip
