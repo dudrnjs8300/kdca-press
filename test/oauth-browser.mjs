@@ -50,6 +50,10 @@ try {
       });
       await page.goto(origin + '/oauth/authorize?' + query);
       const consentUrl = page.url();
+      // Playwright routes only the first URL in a redirect chain; navigate
+      // directly to consent so the legacy policy override actually applies.
+      const legacyPage = await page.goto(consentUrl);
+      assert.equal(legacyPage.headers()['referrer-policy'], 'no-referrer');
       const rejected = page.waitForResponse(r => r.url() === origin + '/oauth/consent' && r.request().method() === 'POST');
       await page.locator('button[value="allow"]').click();
       const response = await rejected;
