@@ -20,7 +20,7 @@ from xml.dom import minidom
 from xml.parsers.expat import ExpatError
 import zipfile
 
-VERSION = "0.2.0"
+VERSION = "0.5.0"
 ROOT = Path(__file__).resolve().parent.parent
 HP = "http://www.hancom.co.kr/hwpml/2011/paragraph"
 KINDS = ("symposium", "statistics", "program", "research", "general")
@@ -181,104 +181,127 @@ def estimated_lines(value, width, size):
 
 
 def make_hwpx(d, synthetic=False):
+    # synthetic is accepted for old callers but never changes visible document text.
     entries = json.loads((ROOT / "assets/template.json").read_text(encoding="utf-8"))
     doc = parse_xml(entries["Contents/section0.xml"])
-    header = parse_xml(entries["Contents/header.xml"])
     root = doc.documentElement
     originals = [n for n in root.childNodes if n.nodeType == n.ELEMENT_NODE]
+
     def el(name, **attrs):
         n = doc.createElementNS(HP, "hp:" + name)
         for k, v in attrs.items(): n.setAttribute(k, str(v))
         return n
-    def p(value, para=101, char=204):
+
+    def p(value, para=29, char=89):
         n = el("p", id=0, paraPrIDRef=para, styleIDRef=0, pageBreak=0, columnBreak=0, merged=0)
         r, t = el("run", charPrIDRef=char), el("t")
         t.appendChild(doc.createTextNode(value)); r.appendChild(t); n.appendChild(r)
         return n
+
     def cell(c, values, para, char):
         sub = first(c, "hp:subList"); empty(sub)
         for value in values: sub.appendChild(p(value, para, char))
-    for pp in elements(header, "hh:paraPr"):
-        ident = pp.getAttribute("id")
-        if ident not in ("7", "8", "101"): continue
-        for tag in ("intent", "left", "right"):
-            for n in elements(pp, "hc:" + tag): n.setAttribute("value", "0")
-        first(pp, "hh:breakSetting").setAttribute("keepLines", "0")
-        if ident == "8": first(pp, "hh:align").setAttribute("horizontal", "LEFT")
-        if ident == "101":
-            for n in elements(pp, "hc:next"): n.setAttribute("value", "700")
-    hc = elements(first(originals[0], "hp:tbl"), "hp:tc")
-    for i, value in enumerate(("질병관리청 참고 양식", "보도자료 초안", "가상 자료 · 시험용" if synthetic else "검토 후 배포")):
-        cell(hc[i], [value], 2, 203 if i == 1 else 34)
-    timing = first(originals[1], "hp:tbl"); tc = elements(timing, "hp:tc")
+
+    def set_height(tbl, cells, heights):
+        for c, height in zip(cells, heights):
+            first(c, "hp:cellSz").setAttribute("height", str(height))
+        first(tbl, "hp:sz").setAttribute("height", str(sum(heights)))
+
+    # Keep the original top banner, page setup, page number and footer artwork.
+    timing = first(originals[1], "hp:tbl")
+    tc = elements(timing, "hp:tc")
     for index, key in ((1, "releaseAt"), (3, "distributedAt")):
-        cell(tc[index], [d["metadata"][key] or "확인 필요"], 2, 34)
-    height = max(2800, *(estimated_lines(d["metadata"][k] or "확인 필요", int(first(tc[i], "hp:cellSz").getAttribute("width")) - 1100, 1000) * 1600 + 400 for i, k in ((1, "releaseAt"), (3, "distributedAt"))))
-    for c in tc: first(c, "hp:cellSz").setAttribute("height", str(height))
-    first(timing, "hp:sz").setAttribute("height", str(height))
-    for footer in elements(originals[1], "hp:footer"):
-        sub = first(footer, "hp:subList"); empty(sub)
-        sub.appendChild(p("가상 자료로 만든 시험용 초안 · 실제 발표 자료가 아닙니다." if synthetic else "AI 작성 보조 초안 · 사실 및 배포 승인 확인 필요", 2, 34))
-    title = first(originals[2], "hp:tbl"); title_cells = elements(title, "hp:tc")
-    cell(title_cells[0], [d["title"]], 7, 202)
-    cell(title_cells[1], ["- " + s for s in d["summaries"]], 8, 203)
-    h1 = estimated_lines(d["title"], 44500, 2600) * 3200 + 700
-    h2 = sum(estimated_lines("- " + s, 44500, 1400) * 2300 for s in d["summaries"]) + 600
-    for c, h in zip(title_cells, (h1, h2)): first(c, "hp:cellSz").setAttribute("height", str(h))
-    first(title, "hp:sz").setAttribute("height", str(h1 + h2)); title.setAttribute("pageBreak", "NONE")
-    for node in originals[3:]: root.removeChild(node)
-    root.appendChild(p("", 95, 34))
-    if synthetic: root.appendChild(p("※ 이 문서는 가상 원문을 이용한 기능 검증용 초안입니다.", 101, 206))
-    def table(t, with_caption=True):
-        out = p("", 0, 34); run = first(out, "hp:run"); empty(run)
+        cell(tc[index], [d["metadata"][key]], 17, 40 if index == 1 else 121)
+    timing_height = max(2797, *(estimated_lines(d["metadata"][key], int(first(tc[i], "hp:cellSz").getAttribute("width")) - 1020, 1000) * 1600 + 282 for i, key in ((1, "releaseAt"), (3, "distributedAt"))))
+    for c in tc: first(c, "hp:cellSz").setAttribute("height", str(timing_height))
+    first(timing, "hp:sz").setAttribute("height", str(timing_height))
+
+    # The title block also contains the footer's table: select the named title cell.
+    title = next(t for t in elements(originals[3], "hp:tbl") if any(c.getAttribute("name") == "제목명" for c in elements(t, "hp:tc")))
+    title_cells = elements(title, "hp:tc")
+    cell(title_cells[0], [d["title"]], 41, 66)
+    cell(title_cells[1], ["- " + s for s in d["summaries"]], 83, 81)
+    title_width = int(first(title, "hp:sz").getAttribute("width"))
+    h1 = estimated_lines(d["title"], title_width - 2000, 2600 * .89) * 3120 + 282
+    h2 = sum(estimated_lines("- " + s, title_width - 2500, 1400) * 2240 for s in d["summaries"]) + 282
+    set_height(title, title_cells, (h1, h2))
+    title.setAttribute("pageBreak", "NONE")
+    contact = first(originals[5], "hp:tbl").cloneNode(True)
+    for node in originals[5:]: root.removeChild(node)
+
+    def table(t):
+        out = p("", 13, 41); run = first(out, "hp:run"); empty(run)
         tbl = timing.cloneNode(True)
-        for r in elements(tbl, "hp:tr"): tbl.removeChild(r)
+        for row in elements(tbl, "hp:tr"): tbl.removeChild(row)
         cols = len(t["columns"])
-        header_rows = 2 if with_caption else 1
-        for key, value in {"rowCnt": len(t["rows"]) + header_rows, "colCnt": cols, "pageBreak": "CELL", "repeatHeader": 1}.items(): tbl.setAttribute(key, str(value))
-        widths = [47415 // cols + (47415 % cols if i == cols - 1 else 0) for i in range(cols)]
+        for key, value in {"rowCnt": len(t["rows"]) + 2, "colCnt": cols, "pageBreak": "CELL", "repeatHeader": 1}.items(): tbl.setAttribute(key, str(value))
+        widths = [47414 // cols + (47414 % cols if i == cols - 1 else 0) for i in range(cols)]
         total = 0
-        rows = ([[t["caption"]]] if with_caption else []) + [t["columns"], *t["rows"]]
-        for ri, row in enumerate(rows):
-            tr = el("tr"); caption = with_caption and ri == 0
-            height = max(2400, *(estimated_lines(s, (47415 if caption else widths[i]) - 1100, 1000) * 1700 + 500 for i, s in enumerate(row)))
+        for ri, row in enumerate([[t["caption"]], t["columns"], *t["rows"]]):
+            tr = el("tr"); caption = ri == 0
+            height = max(2000, *(estimated_lines(s, (47414 if caption else widths[i]) - 1020, 1000) * 1600 + 400 for i, s in enumerate(row)))
             if height > 40000: raise InputError("표의 한 행이 너무 깁니다. 본문으로 옮기거나 행을 나누세요.")
             total += height
             for ci, value in enumerate(row):
                 c = tc[0].cloneNode(True)
-                for k, v in {"name": "", "header": 1 if ri < header_rows else 0, "borderFillIDRef": 27}.items(): c.setAttribute(k, str(v))
-                cell(c, [value], 2, 149 if ri < header_rows else 34)
-                for tag, attrs in {"hp:cellAddr": {"colAddr": ci, "rowAddr": ri}, "hp:cellSpan": {"colSpan": cols if caption else 1, "rowSpan": 1}, "hp:cellSz": {"width": 47415 if caption else widths[ci], "height": height}}.items():
+                for k, v in {"name": "", "header": 1 if ri < 2 else 0, "borderFillIDRef": 2}.items(): c.setAttribute(k, str(v))
+                cell(c, [value], 17, 40 if ri < 2 else 41)
+                for tag, attrs in {"hp:cellAddr": {"colAddr": ci, "rowAddr": ri}, "hp:cellSpan": {"colSpan": cols if caption else 1, "rowSpan": 1}, "hp:cellSz": {"width": 47414 if caption else widths[ci], "height": height}}.items():
                     for k, v in attrs.items(): first(c, tag).setAttribute(k, str(v))
                 tr.appendChild(c)
             tbl.appendChild(tr)
-        first(tbl, "hp:sz").setAttribute("width", "47415"); first(tbl, "hp:sz").setAttribute("height", str(total))
+        first(tbl, "hp:sz").setAttribute("width", "47414")
+        first(tbl, "hp:sz").setAttribute("height", str(total))
         run.appendChild(tbl)
         return out
+
     for i, value in enumerate([d["lead"], *d["paragraphs"]]):
-        root.appendChild(p(value))
+        # The reference uses two leading spaces and an empty body paragraph between ideas.
+        root.appendChild(p("  " + value))
+        root.appendChild(p(""))
         for t in d["tables"]:
             if t["afterParagraph"] == i:
-                root.appendChild(table(t)); root.appendChild(p("", 95, 34))
-    if any(d["metadata"][k] for k in ("department", "manager", "contact")):
-        root.appendChild(table({"columns": ["담당 부서", "담당자", "연락처"], "rows": [[d["metadata"][k] or "확인 필요" for k in ("department", "manager", "contact")]]}, with_caption=False))
-    else:
-        root.appendChild(p("담당 부서·담당자·연락처: 확인 필요", 2, 34))
-    for n in elements(root, "hp:linesegarray"): n.parentNode.removeChild(n)
+                root.appendChild(table(t)); root.appendChild(p(""))
+
+    # Original contact-row geometry; missing metadata is blank, with omissions in review JSON.
+    rows = elements(contact, "hp:tr")
+    for row in rows[1:]: contact.removeChild(row)
+    cells = elements(rows[0], "hp:tc")
+    merged_width = sum(int(first(c, "hp:cellSz").getAttribute("width")) for c in cells[3:5])
+    rows[0].removeChild(cells[4])
+    cells = elements(rows[0], "hp:tc")
+    values = ["담당 부서", d["metadata"]["department"], "담당자", d["metadata"]["manager"], d["metadata"]["contact"]]
+    first(cells[3], "hp:cellSz").setAttribute("width", str(merged_width))
+    contact_height = max(1700, *(estimated_lines(value, int(first(c, "hp:cellSz").getAttribute("width")) - 1020, 1000) * 1600 + 282 for c, value in zip(cells, values)))
+    for i, (c, value) in enumerate(zip(cells, values)):
+        cell(c, [value], 17, 41)
+        if i < 2: c.setAttribute("borderFillIDRef", "2")
+        first(c, "hp:cellAddr").setAttribute("colAddr", str(i))
+        first(c, "hp:cellAddr").setAttribute("rowAddr", "0")
+        first(c, "hp:cellSpan").setAttribute("colSpan", "1")
+        first(c, "hp:cellSpan").setAttribute("rowSpan", "1")
+        first(c, "hp:cellSz").setAttribute("height", str(contact_height))
+    contact.setAttribute("rowCnt", "1"); contact.setAttribute("colCnt", "5")
+    contact.setAttribute("pageBreak", "NONE")
+    first(contact, "hp:sz").setAttribute("height", str(contact_height))
+    out = p("", 13, 41); first(out, "hp:run").appendChild(contact); root.appendChild(out)
+
+    # Changed cells have new paragraphs. Preserve caches inside unchanged artwork
+    # and timing labels; discard only outer flow positions after the fixed banner.
+    for block in originals[1:5]:
+        for n in list(block.childNodes):
+            if getattr(n, "tagName", "") == "hp:linesegarray": block.removeChild(n)
     for tag, start in (("hp:p", 0), ("hp:tbl", 100000)):
         for i, n in enumerate(elements(root, tag), start): n.setAttribute("id", str(i))
-    manifest = parse_xml(entries["Contents/content.hpf"])
-    for n in elements(manifest, "*"):
-        if n.localName == "item" and re.search(r"BinData|PrvImage", n.getAttribute("href")):
-            n.parentNode.removeChild(n)
-        if n.localName in ("title", "creator", "subject", "description", "date", "meta"): empty(n)
-    entries.update({"Contents/section0.xml": doc.toxml(), "Contents/header.xml": header.toxml(), "Contents/content.hpf": manifest.toxml(), "Preview/PrvText.txt": "\r\n".join(all_text(d)), "mimetype": "application/hwp+zip"})
+    entries["Contents/section0.xml"] = doc.toxml()
+    entries["Preview/PrvText.txt"] = "\r\n".join(all_text(d))
     stream = io.BytesIO()
     with zipfile.ZipFile(stream, "w") as archive:
         for name in ["mimetype", *sorted(n for n in entries if n != "mimetype")]:
             info = zipfile.ZipInfo(name, date_time=(2026, 1, 1, 0, 0, 0))
             info.compress_type = zipfile.ZIP_STORED if name == "mimetype" else zipfile.ZIP_DEFLATED
-            archive.writestr(info, entries[name].encode("utf-8"))
+            value = entries[name]
+            archive.writestr(info, base64.b64decode(value["base64"], validate=True) if isinstance(value, dict) else value.encode("utf-8"))
     data = stream.getvalue()
     validate_hwpx(data, d)
     return data
@@ -304,11 +327,17 @@ def validate_hwpx(data, draft=None):
         for tag, attr, ids in (("hp:run", "charPrIDRef", chars), ("hp:p", "paraPrIDRef", paras)):
             for n in elements(section, tag):
                 if n.getAttribute(attr) not in ids: raise InputError("존재하지 않는 서식 참조입니다.")
+        manifest = parse_xml(z.read("Contents/content.hpf").decode("utf-8"))
+        images = {n.getAttribute("id"): n.getAttribute("href") for n in elements(manifest, "*") if n.localName == "item" and n.getAttribute("media-type").startswith("image/")}
+        for n in elements(section, "hc:img"):
+            ref = n.getAttribute("binaryItemIDRef")
+            if ref not in images or images[ref] not in z.namelist():
+                raise InputError("문서에서 참조하는 이미지가 누락되었습니다.")
         present = "\n".join("".join(c.data for c in n.childNodes if c.nodeType == c.TEXT_NODE) for n in elements(section, "hp:t"))
         if draft:
             for s in all_text(draft):
                 if s and s not in present: raise InputError("문서 생성 중 내용이 누락되었습니다.")
-    return {"ok": True, "checks": ["ZIP/mimetype", "XML", "서식 참조", "입력 본문·표 보존" if draft else "입력 원문 미제공"], "nativeHancomVerified": False}
+    return {"ok": True, "checks": ["ZIP/mimetype", "XML", "서식 참조", "내장 이미지 참조", "입력 본문·표 보존" if draft else "입력 원문 미제공"], "nativeHancomVerified": False}
 
 
 def markdown(d):

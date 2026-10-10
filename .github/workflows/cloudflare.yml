@@ -48,6 +48,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: python3 test/worker_assets_test.py
+      - run: python3 test/template_test.py
       - name: Verify native browser consent before deployment
         env:
           PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome

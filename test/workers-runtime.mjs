@@ -91,7 +91,7 @@ try {
         const JSZip=(await import('jszip')).default;
         const a=await JSZip.loadAsync(bytes),b=await JSZip.loadAsync(Buffer.from(baseline.hwpxBase64,'base64'));
         assert.deepEqual(Object.keys(a.files),Object.keys(b.files));
-        for(const name of Object.keys(a.files))assert.equal(await a.file(name).async('string'),await b.file(name).async('string'),name);
+        for(const name of Object.keys(a.files))assert.deepEqual(await a.file(name).async('uint8array'),await b.file(name).async('uint8array'),name);
       }
     }
     results.push({kind,runs:timings.length,first_ms:+timings[0].toFixed(2),median_ms:+[...timings].sort((a,b)=>a-b)[2].toFixed(2),max_ms:+Math.max(...timings).toFixed(2),sha256:expectedHash});

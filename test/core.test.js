@@ -45,7 +45,7 @@ test("three fixtures pass source review and preserve every paragraph/table cell 
       d = draftSchema.parse(c.draft),
       review = reviewDraft(c.source, d);
     assert.equal(review.passed, true, JSON.stringify(review));
-    const result = await generateHwpx(d, { synthetic: true });
+    const result = await generateHwpx(d, { source: c.source, kind: name });
     assert.equal(result.validation.ok, true);
     assert.ok(result.previews.pages >= 1);
     const zip = await JSZip.loadAsync(result.hwpx),
@@ -66,10 +66,10 @@ test("three fixtures pass source review and preserve every paragraph/table cell 
         ),
         `missing text ${name}`,
       );
-    assert.ok(xml.includes("가상 자료"));
+    assert.ok(!/가상 자료|시험용|검토 후 배포|보도자료 초안/.test(xml));
     assert.equal(
       Object.keys(zip.files).some((n) => n.startsWith("BinData/")),
-      false,
+      true,
     );
     assert.equal(result.previews.warnings.length, 0);
   }

@@ -1,14 +1,16 @@
 # 출처와 구현 범위
 
-KDCA 공개 보도자료의 참고 양식을 바탕으로 본문·이미지·이전 작성자 메타데이터를 제거한 템플릿을 사용한다. 기관 공식 배포 도구가 아니다.
+사용자가 제공한 질병관리청 실제 보도자료 HWPX에서 고정 양식을 추출했다.
 
-- 공개 문서: https://www.kdca.go.kr/bbs/kdca/41/312552/artclView.do?layout=unknown
-- HWPX 첨부: https://www.kdca.go.kr/bbs/kdca/42/309587/download.do
-- 원본 SHA-256: 8f98831189a73e1fc93389bb4dfdedfb3239efc3c727a0868312ecce6c5627cb
-- 이용 표시는 원 공개 페이지의 공공누리 출처 표시 조건을 따른다. 공공 로고·원문 사진은 이 패키지에 포함하지 않는다.
+- 원본: 「[10.8.목.조간] 임신당뇨병 산모의 자녀, 당뇨병 위험 최대 4배 이상 높아」, 2026년 10월 8일 조간.
+- 원본 SHA-256: `dbc9fd05d8286b4e2d6946b9bbafc0c80385713ae4a1067971c74c7b272ea4a9`
+- 보존: 질병관리청·대체불가 대한민국 이미지, 건강한 동행 슬로건·1339 이미지, 원본 글꼴과 글자·문단 스타일, 쪽 설정, 쪽번호, 제목·배포 시점·담당 정보 표.
+- 제거: 개별 연구 본문·통계·인명·연락처, 연구용 그림, 이전 작성자·날짜 메타데이터와 이전 본문의 미리보기 이미지.
+- 이미지 네 개는 원본 바이트를 그대로 포함한다. 글꼴 파일은 포함하지 않으며 원본의 글꼴 이름과 서식 참조를 유지한다.
+- 기관 이미지·표장에 자체 코드의 MIT 라이선스를 적용하거나 별도 권리를 주장하지 않는다.
 
-Python 생성·검사 코드는 이 프로젝트에서 작성한 코드이며 추가 패키지를 설치하거나 인터넷에 접속하지 않는다. HWPX 내부 XML을 assets/template.json에 보관하고 실행 시 문서를 조립한다. HWPX 구조 검사는 한컴오피스 조판 인증이 아니다.
+Python 생성·검사 코드는 이 프로젝트에서 작성했으며 표준 라이브러리만 사용한다. XML 문자열과 이미지 base64를 텍스트 파일 `assets/template.json`에 담아 추가 설치나 네트워크 없이 HWPX로 조립한다. 같은 엔진을 Skill, MCP, Cloudflare Workers에서 사용한다. 문서에는 요청하지 않은 초안·시험용·AI 작성 표기를 넣지 않는다.
 
 참고 프로젝트:
-- Kordoc: https://github.com/chrisryugj/kordoc — MIT, Copyright (c) 2026 chrisryugj. MCP 패키지가 사용하는 HWPX 검사·미리보기 엔진. 이 오프라인 Skill에는 Kordoc 실행 코드를 포함하지 않는다.
+- Kordoc: https://github.com/chrisryugj/kordoc — MIT, Copyright (c) 2026 chrisryugj. MCP 패키지의 HWPX 검사·참고 미리보기 엔진. 오프라인 Skill에는 Kordoc 실행 코드를 포함하지 않는다.
 - hwp-auto-docfit: https://github.com/haijun93/hwp-auto-docfit — MIT, Copyright (c) 2026 haijun93. 문서 검사와 서식 정리의 구성 방식을 참고했다. Windows/한글 자동화 코드와 DLL은 포함하지 않는다.

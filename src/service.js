@@ -67,7 +67,8 @@ export class PressService {
     if (this.running.has(key)) return this.running.get(key);
     const task = (async () => {
       const result = await this.renderer(draft, {
-        synthetic: /가상 자료|가상자료|시험용 원문/.test(brief.source),
+        source: brief.source,
+        kind: brief.kind,
       });
       const docId = this.store.save(
         userId,

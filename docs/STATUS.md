@@ -1,6 +1,10 @@
-# v0.4.1 검증 현황
+# v0.5.0 검증 현황
 
-기록일: 2026-10-10 한국.
+기록일: 2026-10-11 한국.
+
+## 실제 양식 반영
+
+첨부된 2026년 10월 8일 보도자료의 로고 네 개, 글꼴·문단 스타일, 제목·배포 시점 표, 쪽번호와 꼬리말을 보존하도록 공통 생성기를 수정했습니다. 불필요한 시험용·초안·AI 작성 표기는 제거했습니다. 이미지 SHA-256과 원본 스타일 XML 일치, 본문·표 보존, 원본 연구·담당자 정보 제거를 회귀 검사합니다. 세부 내용은 [TEMPLATE.md](TEMPLATE.md)를 참고하세요.
 
 ## OAuth 승인 페이지 수정
 
@@ -28,8 +32,9 @@
 | PC 서비스 설정 검사 | systemd unit 문법·비밀값 분리·파일 권한 검사 통과 |
 | PC 설치·자동 시작 파일 | WSL 설치기·systemd 2개 서비스·Windows 로그인 작업 제공; 실제 Windows 실행 미검증 |
 | 재시작 인증 유지 | OAuth 등록·세션·액세스/갱신·폐기 상태 유지와 생성 파일 소멸 자동 시험 통과 |
-| 외부 원격 MCP 호스트 | Cloudflare 두 Worker 배포·OAuth 비밀값 설정 완료; `/healthz`·OAuth discovery·미인증 401 확인. 로그인 후 생성·CPU 실측은 미검증 |
-| ChatGPT·Claude·Gemini 각 실제 계정 연결 | 미검증; 현재 실행 환경의 Skill 시험과 구분 |
+| 외부 원격 MCP 호스트 | Cloudflare 두 Worker 배포·OAuth 비밀값 설정 완료; `/healthz`·OAuth discovery·미인증 401 확인. ChatGPT OAuth 연결 후 세 유형 생성·파일 반환 확인; Cloudflare CPU 실측은 미검증 |
+| ChatGPT 실제 계정 연결 | 연결된 MCP의 prepare·review·generate·get_artifact로 세 유형 실행 확인 |
+| Claude·Gemini 각 실제 계정 연결 | 미검증 |
 | 한컴오피스 열기·저장·재열기 | 미검증 |
 
 자동 시험 통과는 모든 AI 플랫폼에서 설치가 끝났다는 뜻이 아닙니다. 플랫폼별 계정 기능·인증 호환성과 실제 한글 조판 검증이 남아 있습니다. 저장소는 dudrnjs8300/kdca-press입니다. 안내 사이트와 Skill 다운로드는 공개되었으며, 원격 MCP 주소는 `https://kdca-press.on0740.workers.dev/mcp`입니다. 현재 허용 계정은 `dudrnjs8300`입니다.
@@ -51,4 +56,4 @@
 - 비공개 Python 엔진과 공개 MCP 어댑터 업로드, GitHub OAuth 설정 저장 완료.
 - 배포 직후 `/healthz`가 일시적으로 404를 반환했으나 후속 실접속 검사에서 상태·OAuth 메타데이터·미인증 401이 모두 통과했습니다. v0.4.1은 공개 상태 검사에 한정한 횟수 제한 재시도를 추가합니다.
 - 배포 로그의 Worker Startup Time은 요청당 CPU나 문서 생성 시간으로 해석하지 않습니다.
-- 인증된 실제 서비스의 문서 생성, CPU 사용량 및 각 AI 계정 설치 검증은 아직 완료하지 않았습니다.
+- 이후 인증된 ChatGPT 연결에서 세 유형의 문서 생성·파일 반환을 확인했습니다. Cloudflare CPU 사용량과 Claude·Gemini 실제 계정 설치 검증은 남아 있습니다.

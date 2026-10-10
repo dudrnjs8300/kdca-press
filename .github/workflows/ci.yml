@@ -52,6 +52,7 @@ jobs:
         run: node test/oauth-browser.mjs
       - run: python3 test/pc_setup_test.py
       - run: python3 test/worker_assets_test.py
+      - run: python3 test/template_test.py
       - name: Check Windows startup script syntax
         shell: pwsh
         run: |
