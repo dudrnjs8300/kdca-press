@@ -20,7 +20,7 @@ from xml.dom import minidom
 from xml.parsers.expat import ExpatError
 import zipfile
 
-VERSION = "0.5.0"
+VERSION = "0.5.1"
 ROOT = Path(__file__).resolve().parent.parent
 HP = "http://www.hancom.co.kr/hwpml/2011/paragraph"
 KINDS = ("symposium", "statistics", "program", "research", "general")
@@ -169,21 +169,63 @@ def parse_xml(value):
     return minidom.parseString(value)
 
 
+def glyph_width(c):
+    if c.isspace(): return 0.5
+    if unicodedata.east_asian_width(c) in "WF": return 1.0
+    if c in "ilI.,:;!'|": return 0.35
+    if c in "MW@%": return 0.9
+    return 0.65
+
+
 def estimated_lines(value, width, size):
     # Conservative cell sizing; native Hancom handles final line composition.
-    def weight(c):
-        if c.isspace(): return 0.5
-        if unicodedata.east_asian_width(c) in "WF": return 1.0
-        if c in "ilI.,:;!'|": return 0.35
-        if c in "MW@%": return 0.9
-        return 0.65
-    return max(1, sum(max(1, math.ceil(sum(weight(c) for c in line) * size / max(width, size))) for line in value.split("\n")))
+    return max(1, sum(max(1, math.ceil(sum(glyph_width(c) for c in line) * size / max(width, size))) for line in value.split("\n")))
+
+
+def composed_lines(value, width, size, spacing):
+    """Approximate KEEP_WORD wrapping, including emergency breaks of long words.
+
+    HWP tracking is a percentage of the em added per inter-character gap.
+    This is deliberately a stdlib-only estimate, not a native Hancom renderer.
+    """
+    def advance(text):
+        return size * (sum(glyph_width(c) for c in text) + max(0, len(text) - 1) * spacing / 100)
+    lines, current = [], ""
+    for token in re.findall(r"\s+|\S+", value):
+        if not token.isspace() and current.strip() and advance(current + token) > width:
+            lines.append(current.rstrip()); current = ""
+        for c in token:
+            if current and advance(current + c) > width:
+                if current.strip(): lines.append(current.rstrip())
+                current = ""
+                if c.isspace(): continue
+            current += c
+    if current.strip(): lines.append(current.rstrip())
+    return lines or [""]
+
+
+def fit_tracking(value, width, size=1400, base=-1):
+    """Remove a 1–4-character orphan only when at most 3 extra points suffice."""
+    if not value.strip() or "\n" in value or "\r" in value or "\t" in value:
+        return base
+    before = composed_lines(value, width, size, base)
+    if len(before) < 2 or not 1 <= len(before[-1].strip()) <= 4:
+        return base
+    for spacing in range(base - 1, base - 4, -1):
+        after = composed_lines(value, width, size, spacing)
+        if len(after) == len(before) - 1:
+            return spacing
+    return base
 
 
 def make_hwpx(d, synthetic=False):
     # synthetic is accepted for old callers but never changes visible document text.
     entries = json.loads((ROOT / "assets/template.json").read_text(encoding="utf-8"))
     doc = parse_xml(entries["Contents/section0.xml"])
+    header = parse_xml(entries["Contents/header.xml"])
+    char_properties = first(header, "hh:charProperties")
+    char_styles = {int(n.getAttribute("id")): n for n in elements(header, "hh:charPr")}
+    tracking_styles = {}
     root = doc.documentElement
     originals = [n for n in root.childNodes if n.nodeType == n.ELEMENT_NODE]
 
@@ -192,15 +234,33 @@ def make_hwpx(d, synthetic=False):
         for k, v in attrs.items(): n.setAttribute(k, str(v))
         return n
 
-    def p(value, para=29, char=89):
+    def fitted_style(value, char, width):
+        # Only clone body/summary styles. The title is already tightly tracked (-11).
+        if char not in (81, 89) or width is None: return char
+        spacing = fit_tracking(value, width)
+        if spacing == -1: return char
+        key = (char, spacing)
+        if key not in tracking_styles:
+            clone = char_styles[char].cloneNode(True)
+            new_id = max(char_styles) + 1
+            clone.setAttribute("id", str(new_id))
+            tracking = first(clone, "hh:spacing")
+            for name in list(tracking.attributes.keys()): tracking.setAttribute(name, str(spacing))
+            char_properties.appendChild(clone)
+            char_styles[new_id] = clone
+            char_properties.setAttribute("itemCnt", str(len(char_styles)))
+            tracking_styles[key] = new_id
+        return tracking_styles[key]
+
+    def p(value, para=29, char=89, width=None):
         n = el("p", id=0, paraPrIDRef=para, styleIDRef=0, pageBreak=0, columnBreak=0, merged=0)
-        r, t = el("run", charPrIDRef=char), el("t")
+        r, t = el("run", charPrIDRef=fitted_style(value, char, width)), el("t")
         t.appendChild(doc.createTextNode(value)); r.appendChild(t); n.appendChild(r)
         return n
 
-    def cell(c, values, para, char):
+    def cell(c, values, para, char, width=None):
         sub = first(c, "hp:subList"); empty(sub)
-        for value in values: sub.appendChild(p(value, para, char))
+        for value in values: sub.appendChild(p(value, para, char, width))
 
     def set_height(tbl, cells, heights):
         for c, height in zip(cells, heights):
@@ -219,9 +279,9 @@ def make_hwpx(d, synthetic=False):
     # The title block also contains the footer's table: select the named title cell.
     title = next(t for t in elements(originals[3], "hp:tbl") if any(c.getAttribute("name") == "제목명" for c in elements(t, "hp:tc")))
     title_cells = elements(title, "hp:tc")
-    cell(title_cells[0], [d["title"]], 41, 66)
-    cell(title_cells[1], ["- " + s for s in d["summaries"]], 83, 81)
     title_width = int(first(title, "hp:sz").getAttribute("width"))
+    cell(title_cells[0], [d["title"]], 41, 66)
+    cell(title_cells[1], ["- " + s for s in d["summaries"]], 83, 81, title_width - 2500)
     h1 = estimated_lines(d["title"], title_width - 2000, 2600 * .89) * 3120 + 282
     h2 = sum(estimated_lines("- " + s, title_width - 2500, 1400) * 2240 for s in d["summaries"]) + 282
     set_height(title, title_cells, (h1, h2))
@@ -255,9 +315,11 @@ def make_hwpx(d, synthetic=False):
         run.appendChild(tbl)
         return out
 
+    page = first(root, "hp:pagePr"); margins = first(page, "hp:margin")
+    body_width = int(page.getAttribute("width")) - int(margins.getAttribute("left")) - int(margins.getAttribute("right"))
     for i, value in enumerate([d["lead"], *d["paragraphs"]]):
         # The reference uses two leading spaces and an empty body paragraph between ideas.
-        root.appendChild(p("  " + value))
+        root.appendChild(p("  " + value, width=body_width))
         root.appendChild(p(""))
         for t in d["tables"]:
             if t["afterParagraph"] == i:
@@ -294,6 +356,7 @@ def make_hwpx(d, synthetic=False):
     for tag, start in (("hp:p", 0), ("hp:tbl", 100000)):
         for i, n in enumerate(elements(root, tag), start): n.setAttribute("id", str(i))
     entries["Contents/section0.xml"] = doc.toxml()
+    if tracking_styles: entries["Contents/header.xml"] = header.toxml()
     entries["Preview/PrvText.txt"] = "\r\n".join(all_text(d))
     stream = io.BytesIO()
     with zipfile.ZipFile(stream, "w") as archive:
