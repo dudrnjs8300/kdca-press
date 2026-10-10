@@ -6,14 +6,19 @@ from workers import DurableObject, Response, WorkerEntrypoint
 import kdca_core
 from bundled_assets import ASSETS
 
-# Generated at build time from the Skill distribution. Writes use only the
-# isolate's ephemeral filesystem, never Durable Object storage.
+# Deploy-time Python memory snapshots do not guarantee that temporary files
+# written during import survive restoration. Materialize bundled assets when
+# handling the request; never cache an "initialized" flag in Python memory.
 ROOT = Path("/tmp/kdca-press-assets")
-for name, content in ASSETS.items():
-    target = ROOT / name
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(content, encoding="utf-8")
-kdca_core.ROOT = ROOT
+
+
+def ensure_assets():
+    for name, content in ASSETS.items():
+        target = ROOT / name
+        if not target.is_file():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(content, encoding="utf-8")
+    kdca_core.ROOT = ROOT
 
 
 class PressEngine(DurableObject):
@@ -25,10 +30,13 @@ class PressEngine(DurableObject):
         if len(raw.encode("utf-8")) > 262144:
             return Response.json({"error": "payload_too_large"}, status=413)
         try:
+            ensure_assets()
             result = kdca_core.process(json.loads(raw), action)
             return Response.json(result)
         except (ValueError, KeyError, TypeError) as exc:
             return Response.json({"error": str(exc)}, status=400)
+        except OSError:
+            return Response.json({"error": "문서 생성기의 양식 파일을 읽을 수 없습니다.", "code": "ENGINE_ASSET_IO"}, status=503)
 
 
 class Default(WorkerEntrypoint):

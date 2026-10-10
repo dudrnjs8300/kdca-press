@@ -65,6 +65,11 @@ try {
   const results=[];
   for(const kind of ['symposium','statistics','program']) {
     const input=JSON.parse(await readFile(new URL(`../examples/${kind}.json`,import.meta.url),'utf8'));
+    const prepared=await c.callTool({name:'kdca_prepare',arguments:{source:input.source,kind}});
+    assert.ok(!prepared.isError,JSON.stringify(prepared.structuredContent));
+    assert.equal(prepared.structuredContent.source_sha256,createHash('sha256').update(input.source.trim()).digest('hex'));
+    assert.ok(prepared.structuredContent.guide.includes('KDCA'));
+    assert.equal((await c.callTool({name:'kdca_review',arguments:input})).structuredContent.passed,true);
     const timings=[];let expectedHash;
     for(let i=0;i<5;i++) {
       const start=performance.now();
