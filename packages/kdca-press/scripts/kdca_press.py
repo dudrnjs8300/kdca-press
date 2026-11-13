@@ -20,12 +20,21 @@ from xml.dom import minidom
 from xml.parsers.expat import ExpatError
 import zipfile
 
-VERSION = "0.5.1"
+VERSION = "0.5.2"
 ROOT = Path(__file__).resolve().parent.parent
 HP = "http://www.hancom.co.kr/hwpml/2011/paragraph"
 KINDS = ("symposium", "statistics", "program", "research", "general")
 META = {"releaseAt": 100, "distributedAt": 100, "department": 80, "manager": 80, "contact": 80}
 BAD = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff\ufffe\uffff]")
+REVIEW_NOTICE = "AI는 보도자료 작성·퇴고를 돕는 보조도구입니다. 사용·배포 전에 담당자가 원문과 대조하여 사실·수치·용어·제목·인용문을 반드시 검토하고 기관의 검토·승인 절차를 거치세요. 자동 검사 통과나 파일 생성은 정확성 또는 배포 승인을 뜻하지 않습니다."
+HEADLINE_CHECKS = (
+    "누가 무엇을 했거나 알아냈는지 제목만 읽어도 알 수 있는가?",
+    "정확성이 같은 표현 중 익숙한 말을 골랐는가? 필요한 전문용어와 공식 명칭은 보존했는가?",
+    "수식어가 꾸미는 대상이 분명하고 단어 조합이 자연스러운가?",
+    "세부 방법·부가 수치를 요약으로 옮겨도 대상·조건·가능성의 범위가 유지되는가?",
+    "수치의 대상·단위·분모·기간이 같은가? 총 소요 시간과 특정 반응 시간을 구분했는가?",
+    "유전자 검출과 환자 확진, 실험실 결과와 임상 성능, 개발과 현장 적용, 관련성과 인과관계를 구분했는가?",
+)
 
 
 class InputError(ValueError):
@@ -98,6 +107,32 @@ def all_text(d):
             *d["metadata"].values()]
 
 
+def headline_findings(title):
+    """Advisory patterns, not a language-quality score or a word blacklist.
+
+    Never rewrite the draft here: meaning and technical terms require the source
+    and an editor. Keep findings in the existing warnings channel for old clients.
+    """
+    findings = []
+    patterns = (
+        (r"휴대(?:형|용)\s*(?:검출|분석|진단|검사)?\s*(?:기술|기법|체계)",
+         "headline_modifier",
+         "휴대할 수 있는 대상이 장비인지 확인하세요. 장비를 뜻한다면 '휴대형 장비를 이용한 분석법'처럼 수식 대상을 분명히 하되 원문의 기술 의미를 유지하세요."),
+        (r"패러다임(?:을|의)?\s*(?:전환|바꾸)|새(?:로운)?\s*지평|미래(?:를)?\s*선도",
+         "headline_abstract_claim",
+         "추상적인 평가가 핵심 사실을 대신하는지 확인하세요. 원문에 있는 구체적인 개발·분석·확인 내용을 제목에 담고, 공식 명칭이나 연구 대상 자체인 표현은 유지할 수 있습니다."),
+    )
+    for pattern, code, message in patterns:
+        match = re.search(pattern, title)
+        if match:
+            findings.append({"code": code, "message": message, "field": "title", "excerpt": match.group()})
+    # This is a review cue, not a new title limit (the input limit stays 110).
+    if len(title) > 60:
+        findings.append({"code": "headline_length", "field": "title",
+                         "message": "제목이 60자를 넘습니다. 세부 방법·부가 수치를 요약으로 옮길지 검토하세요. 필요한 대상·조건·공식 명칭은 보존하고 길이만으로 오류라고 판단하지 마세요."})
+    return findings
+
+
 def review(source, d):
     errors, warnings = [], []
     def issue(items, code, message):
@@ -144,10 +179,16 @@ def review(source, d):
         issue(warnings, "long_summary", "요약문을 더 간결하게 다듬을지 검토하세요.")
     if any(len(s) > 650 for s in d["paragraphs"]):
         issue(warnings, "long_paragraph", "긴 문단을 의미 단위로 나눌지 검토하세요.")
+    title_findings = headline_findings(d["title"])
+    warnings.extend(title_findings)
     return {"passed": not errors, "errors": errors, "warnings": warnings,
             "missingMetadata": [k for k, v in d["metadata"].items() if not v],
             "missingFacts": d["missingFacts"],
-            "limitations": "규칙 기반 보조 검사입니다. 의미·인과관계·숫자의 역할·사실 누락은 AI와 담당자가 원문을 직접 대조해야 합니다."}
+            "headlineReview": {"findingCodes": [f["code"] for f in title_findings],
+                               "checks": list(HEADLINE_CHECKS),
+                               "instruction": "제목 경고와 검토 항목을 원문에 비추어 확인하세요. 필요한 부분만 수정하고 정확한 전문용어는 보존하세요. 수정 후 수치·대상·조건·확정 수준을 재대조하고 다시 검사하세요. 경고가 없어도 의미와 자연스러움은 검토해야 합니다."},
+            "humanReviewRequired": True, "reviewNotice": REVIEW_NOTICE,
+            "limitations": "규칙 기반 보조 검사입니다. passed는 구현된 오류 규칙을 통과했다는 뜻입니다. 제목의 자연스러움·의미·인과관계·숫자의 역할·사실 누락은 AI와 담당자가 원문을 직접 대조해야 합니다."}
 
 
 def elements(node, name):
@@ -433,7 +474,8 @@ def process(payload, action):
     kind = payload.get("kind", "general")
     if kind not in KINDS: raise InputError("지원하지 않는 보도자료 유형입니다.")
     if action == "prepare":
-        return {"version": VERSION, "kind": kind, "numeric_inventory": numeric_tokens(source), "source_sha256": hashlib.sha256(source.encode()).hexdigest(), "guide": (ROOT / "references/editorial.md").read_text(encoding="utf-8")}
+        return {"version": VERSION, "kind": kind, "numeric_inventory": numeric_tokens(source), "source_sha256": hashlib.sha256(source.encode()).hexdigest(), "guide": (ROOT / "references/editorial.md").read_text(encoding="utf-8"),
+                "humanReviewRequired": True, "reviewNotice": REVIEW_NOTICE}
     d = draft_input(payload.get("draft"))
     report = review(source, d)
     if action == "review": return report

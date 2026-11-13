@@ -33,3 +33,5 @@ Skill에 포함된 Python 생성 코드는 자체 구현이고 표준 라이브�
 - 국립국어원 보도자료 작성 길잡이: https://www.korean.go.kr/front/etcData/etcDataView.do?etc_seq=663&mn_id=216&pageIndex=1
 
 `examples/`의 인물 없는 기관·일정·수치·장소는 기능 검증을 위해 만든 가상 사례이며 실제 발표가 아닙니다.
+
+한국어 퇴고 방식은 [im-not-ai / humanize-korean](https://github.com/epoko77-ai/im-not-ai)의 공개 지침(MIT)도 참고했습니다. 사실 보존, 장르 유지, 불필요한 수정 억제 원칙을 참고해 KDCA 제목에 맞는 자체 지침과 제한적인 검사 규칙을 작성했습니다. 해당 프로젝트의 코드·프롬프트 전문·표현 목록을 포함하지 않습니다.

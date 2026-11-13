@@ -8,6 +8,7 @@ import { AuthStore } from './auth-store.js';
 import { installAuth } from './auth.js';
 import { Artifacts, formats } from './artifacts.js';
 import { createPortableMcp } from './mcp-v2.js';
+import { MCP_VERSION } from './mcp-server.js';
 
 export function createRemoteApp(cfg,{store=new AuthStore(cfg.authDataDir),artifacts=new Artifacts(),previewer}={}) {
   const app=express(); app.disable('x-powered-by'); app.set('trust proxy',cfg.trustProxy);
@@ -26,7 +27,7 @@ export function createRemoteApp(cfg,{store=new AuthStore(cfg.authDataDir),artifa
   app.use(express.json({limit:'256kb'}),express.urlencoded({extended:false,limit:'16kb'}),cookieParser());
   const auth=installAuth(app,store,{...cfg,temporaryArtifacts:true});
   app.use(['/mcp','/artifacts'],rateLimit({windowMs:60000,limit:60,standardHeaders:'draft-7',legacyHeaders:false}));
-  app.get('/healthz',(req,res)=>res.json({status:'ok',service:'kdca-press',version:'0.5.1',storage:'temporary-memory',authentication:store.persistent?'persistent':'memory'}));
+  app.get('/healthz',(req,res)=>res.json({status:'ok',service:'kdca-press',version:MCP_VERSION,storage:'temporary-memory',authentication:store.persistent?'persistent':'memory'}));
   app.get('/api/session',(req,res)=>res.json({user:req.user||null,csrf:req.session?.csrf||null,demo:cfg.demo,mcpUrl:cfg.resource,artifactTtlMinutes:artifacts.ttl/60000}));
   app.get('/artifacts/:id/:format',(req,res)=>{
     const item=artifacts.download(req.params.id,req.query.token),format=req.params.format;

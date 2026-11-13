@@ -62,20 +62,27 @@ try {
   const tokens=await (await web('/oauth/token',form(grant))).json();token=tokens.access_token;assert.ok(token);
   assert.equal((await web('/oauth/token',form(grant))).status,400);
   const c=await client();assert.equal((await c.listTools()).tools.length,5);
+  const guide=(await c.callTool({name:'kdca_guide',arguments:{}})).structuredContent;
+  assert.equal(guide.version,JSON.parse(await readFile(new URL('../package.json',import.meta.url),'utf8')).version);
+  assert.equal(guide.humanReviewRequired,true);
   const results=[];
   for(const kind of ['symposium','statistics','program']) {
     const input=JSON.parse(await readFile(new URL(`../examples/${kind}.json`,import.meta.url),'utf8'));
     const prepared=await c.callTool({name:'kdca_prepare',arguments:{source:input.source,kind}});
     assert.ok(!prepared.isError,JSON.stringify(prepared.structuredContent));
     assert.equal(prepared.structuredContent.source_sha256,createHash('sha256').update(input.source.trim()).digest('hex'));
-    assert.ok(prepared.structuredContent.guide.includes('KDCA'));
-    assert.equal((await c.callTool({name:'kdca_review',arguments:input})).structuredContent.passed,true);
+    assert.equal(prepared.structuredContent.guide,guide.editorial);
+    assert.equal(prepared.structuredContent.humanReviewRequired,true);
+    const reviewed=(await c.callTool({name:'kdca_review',arguments:input})).structuredContent;
+    assert.equal(reviewed.passed,true);
+    assert.deepEqual(reviewed,await portable('review',input));
     const timings=[];let expectedHash;
     for(let i=0;i<5;i++) {
       const start=performance.now();
       const generated=await c.callTool({name:'kdca_generate',arguments:input},undefined,{timeout:90000});
       assert.ok(!generated.isError,JSON.stringify(generated.structuredContent));
       const ms=performance.now()-start,data=generated.structuredContent;timings.push(ms);
+      assert.deepEqual(data.review,reviewed);
       const file=data.delivery.files.find(f=>f.format==='hwpx');
       const response=await fetch(file.url);assert.equal(response.status,200);
       const bytes=Buffer.from(await response.arrayBuffer());
@@ -98,6 +105,12 @@ try {
     console.log('PASS',kind,JSON.stringify(results.at(-1)));
   }
   const bad=JSON.parse(await readFile(new URL('../examples/statistics.json',import.meta.url),'utf8'));
+  const titleProbe=structuredClone(bad);
+  titleProbe.source+=' 가상 연구팀은 휴대형 장비를 활용한 분석법을 개발했다.';
+  titleProbe.draft.title='휴대형 분석기술 개발';
+  const titleReview=(await c.callTool({name:'kdca_review',arguments:titleProbe})).structuredContent;
+  assert.ok(titleReview.warnings.some(w=>w.code==='headline_modifier'));
+  assert.deepEqual(titleReview,await portable('review',titleProbe));
   const stress=structuredClone(bad);
   stress.draft.paragraphs=Array.from({length:24},()=>bad.draft.paragraphs[0]);
   stress.draft.evidence=Array.from({length:60},()=>bad.draft.evidence[0]);
