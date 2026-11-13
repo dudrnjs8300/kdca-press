@@ -34,8 +34,13 @@ class WorkerAssetsTest(unittest.TestCase):
                 for _ in range(2):
                     self.assertFalse(entry.ROOT.exists())
                     entry.ensure_assets()
-                    self.assertEqual(core.process(data, "prepare")["guide"], assets["references/editorial.md"])
-                    self.assertTrue(core.process(data, "generate")["ok"])
+                    prepared = core.process(data, "prepare")
+                    self.assertEqual(prepared["guide"], assets["references/editorial.md"])
+                    self.assertTrue(prepared["humanReviewRequired"])
+                    generated = core.process(data, "generate")
+                    self.assertTrue(generated["ok"])
+                    self.assertEqual(generated["review"], core.process(data, "review"))
+                    self.assertTrue(generated["review"]["headlineReview"]["checks"])
                     shutil.rmtree(entry.ROOT)
 
 

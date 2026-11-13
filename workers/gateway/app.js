@@ -4,7 +4,7 @@ import cookieParser from 'cookie-parser';
 import {rateLimit} from 'express-rate-limit';
 import {StreamableHTTPServerTransport} from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import {installAuth} from '../../src/auth.js';
-import {createMcp} from '../../src/mcp-server.js';
+import {createMcp,MCP_VERSION} from '../../src/mcp-server.js';
 import {formats} from '../../src/artifacts.js';
 import guide from '../../packages/kdca-press/references/editorial.md';
 import formatGuide from '../../packages/kdca-press/references/draft-format.md';
@@ -26,7 +26,7 @@ export function createWorkerApp(cfg,{store,artifacts,engine}) {
   app.use(express.json({limit:'256kb'}),express.urlencoded({extended:false,limit:'16kb'}));
   const auth=installAuth(app,store,{...cfg,temporaryArtifacts:true});
   app.use(['/mcp','/artifacts'],rateLimit({windowMs:60000,limit:60,standardHeaders:'draft-7',legacyHeaders:false,store:cfg.createRateLimitStore()}));
-  app.get('/healthz',(req,res)=>res.json({status:'ok',service:'kdca-press',runtime:'cloudflare-workers-durable-objects',authentication:'persistent',storage:'temporary-30-minutes',nativeHancomVerified:false}));
+  app.get('/healthz',(req,res)=>res.json({status:'ok',service:'kdca-press',version:MCP_VERSION,runtime:'cloudflare-workers-durable-objects',authentication:'persistent',storage:'temporary-30-minutes',nativeHancomVerified:false}));
   app.get('/api/session',(req,res)=>res.json({user:req.user||null,csrf:req.session?.csrf||null,demo:cfg.demo,mcpUrl:cfg.resource,artifactTtlMinutes:30}));
   app.get('/',(req,res)=>res.type('html').send('<!doctype html><html lang="ko"><meta charset="utf-8"><title>KDCA 보도자료 MCP</title><h1>KDCA 보도자료 MCP</h1><p>질병관리청 양식을 참고한 개인용 작성 보조 도구입니다.</p><p>AI에서 이 사이트의 /mcp 주소를 연결하세요.</p><a href="https://dudrnjs8300.github.io/kdca-press/">설치 및 사용 안내</a></html>'));
   app.get('/style.css',(req,res)=>res.type('css').send('body{font:17px/1.7 sans-serif;max-width:800px;margin:60px auto;padding:24px;color:#17342b}button{padding:12px;margin:8px}'));
